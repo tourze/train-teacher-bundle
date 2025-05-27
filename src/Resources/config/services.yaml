@@ -5,5 +5,9 @@ services:
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
     public: false
 
-#  Tourze\TrainTeacherBundle\Controller\:
-#    resource: '../../Controller/'
+  Tourze\TrainTeacherBundle\Command\:
+    resource: '../../Command/'
+  Tourze\TrainTeacherBundle\Repository\:
+    resource: '../../Repository/'
+  Tourze\TrainTeacherBundle\Service\:
+    resource: '../../Service/'
