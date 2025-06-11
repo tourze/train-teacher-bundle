@@ -168,7 +168,7 @@ class PerformanceCalculateCommand extends Command
             $io->success('教师绩效计算完成');
             return Command::SUCCESS;
 
-        } catch (\Exception $e) {
+        } catch  (\Throwable $e) {
             $io->error('绩效计算失败: ' . $e->getMessage());
             return Command::FAILURE;
         }
@@ -184,7 +184,7 @@ class PerformanceCalculateCommand extends Command
             try {
                 $teacher = $this->teacherService->getTeacherById($teacherId);
                 return [$teacher];
-            } catch (\Exception $e) {
+            } catch  (\Throwable $e) {
                 return [];
             }
         }
@@ -250,7 +250,7 @@ class PerformanceCalculateCommand extends Command
                 $io->text("预览: 将计算教师 {$teacherName} 的绩效");
             }
 
-        } catch (\Exception $e) {
+        } catch  (\Throwable $e) {
             $calculationResults['failed_teachers']++;
             $calculationResults['errors'][] = [
                 'teacher_id' => $teacher->getId(),

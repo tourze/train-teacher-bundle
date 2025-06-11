@@ -151,7 +151,7 @@ class EvaluationReminderCommand extends Command
             $io->success('评价提醒发送完成');
             return Command::SUCCESS;
 
-        } catch (\Exception $e) {
+        } catch  (\Throwable $e) {
             $io->error('评价提醒发送失败: ' . $e->getMessage());
             return Command::FAILURE;
         }
@@ -170,7 +170,7 @@ class EvaluationReminderCommand extends Command
         if ($teacherId) {
             try {
                 $teachers = [$this->teacherService->getTeacherById($teacherId)];
-            } catch (\Exception $e) {
+            } catch  (\Throwable $e) {
                 return [];
             }
         } else {
@@ -280,7 +280,7 @@ class EvaluationReminderCommand extends Command
                 count($evaluators)
             ));
 
-        } catch (\Exception $e) {
+        } catch  (\Throwable $e) {
             $reminderResults['failed_reminders']++;
             $reminderResults['errors'][] = [
                 'teacher_id' => $task['teacher']->getId(),

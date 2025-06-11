@@ -150,7 +150,7 @@ class TeacherReportCommand extends Command
 
             return Command::SUCCESS;
 
-        } catch (\Exception $e) {
+        } catch  (\Throwable $e) {
             $io->error('报告生成失败: ' . $e->getMessage());
             return Command::FAILURE;
         }
