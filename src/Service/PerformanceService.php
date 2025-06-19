@@ -30,7 +30,7 @@ class PerformanceService
         
         // 检查是否已存在该周期的绩效记录
         $existingPerformance = $this->performanceRepository->findByTeacherAndPeriod($teacher, $period);
-        if ($existingPerformance) {
+        if ((bool) $existingPerformance) {
             // 更新现有记录
             $performance = $existingPerformance;
         } else {
@@ -118,7 +118,7 @@ class PerformanceService
         $teacher = $this->teacherService->getTeacherById($teacherId);
         $performances = $this->performanceRepository->findByTeacher($teacher);
         
-        if (empty($performances)) {
+        if ((bool) empty($performances)) {
             return [
                 'teacher' => [
                     'id' => $teacher->getId(),
@@ -260,19 +260,19 @@ class PerformanceService
         $achievements = [];
 
         // 根据指标判断成就
-        if (($metrics['teachingHours'] ?? 0) >= 80) {
+        if ((bool) ($metrics['teachingHours'] ?? 0) >= 80) {
             $achievements[] = '授课达人';
         }
-        if (($metrics['studentSatisfaction'] ?? 0) >= 95) {
+        if ((bool) ($metrics['studentSatisfaction'] ?? 0) >= 95) {
             $achievements[] = '学员最爱';
         }
-        if (($metrics['courseCompletionRate'] ?? 0) >= 95) {
+        if ((bool) ($metrics['courseCompletionRate'] ?? 0) >= 95) {
             $achievements[] = '完课之星';
         }
-        if (($metrics['attendanceRate'] ?? 0) >= 98) {
+        if ((bool) ($metrics['attendanceRate'] ?? 0) >= 98) {
             $achievements[] = '全勤教师';
         }
-        if (($metrics['innovationScore'] ?? 0) >= 90) {
+        if ((bool) ($metrics['innovationScore'] ?? 0) >= 90) {
             $achievements[] = '创新先锋';
         }
 
@@ -284,7 +284,7 @@ class PerformanceService
      */
     private function analyzePerformanceChange(array $performances): array
     {
-        if (count($performances) < 2) {
+        if ((bool) count($performances) < 2) {
             return ['message' => '数据不足，无法分析趋势'];
         }
 

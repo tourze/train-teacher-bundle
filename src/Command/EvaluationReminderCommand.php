@@ -18,12 +18,14 @@ use Tourze\TrainTeacherBundle\Service\TeacherService;
  * 用于发送评价提醒通知，提醒相关人员进行教师评价
  */
 #[AsCommand(
-    name: 'teacher:evaluation:reminder',
+    name: self::NAME,
     description: '发送教师评价提醒通知'
 )]
 class EvaluationReminderCommand extends Command
 {
-    public function __construct(
+    
+    public const NAME = 'teacher:evaluation:reminder';
+public function __construct(
         private readonly EvaluationService $evaluationService,
         private readonly TeacherService $teacherService,
         private readonly TeacherRepository $teacherRepository,
@@ -83,13 +85,13 @@ class EvaluationReminderCommand extends Command
         $evaluationType = $input->getOption('evaluation-type');
         $teacherId = $input->getOption('teacher-id');
         $daysOverdue = (int) $input->getOption('days-overdue');
-        $isDryRun = $input->getOption('dry-run');
-        $force = $input->getOption('force');
+        $isDryRun = (bool) $input->getOption('dry-run');
+        $force = (bool) $input->getOption('force');
         $batchSize = (int) $input->getOption('batch-size');
 
         $io->title('教师评价提醒');
 
-        if ($isDryRun) {
+        if ((bool) $isDryRun) {
             $io->note('运行在预览模式，不会发送实际通知');
         }
 
@@ -106,7 +108,7 @@ class EvaluationReminderCommand extends Command
             $reminderTasks = $this->getReminderTasks($teacherId, $evaluationType, $daysOverdue, $force);
             $reminderResults['total_reminders'] = count($reminderTasks);
 
-            if (empty($reminderTasks)) {
+            if ((bool) empty($reminderTasks)) {
                 $io->success('没有需要发送的评价提醒');
                 return Command::SUCCESS;
             }
@@ -167,7 +169,7 @@ class EvaluationReminderCommand extends Command
         $overdueDate = (clone $currentDate)->modify("-{$daysOverdue} days");
 
         // 获取目标教师列表
-        if ($teacherId) {
+        if ((bool) $teacherId) {
             try {
                 $teachers = [$this->teacherService->getTeacherById($teacherId)];
             } catch (\Throwable $e) {
@@ -183,7 +185,7 @@ class EvaluationReminderCommand extends Command
             
             foreach ($evaluationTypes as $type) {
                 $reminderTask = $this->checkEvaluationReminder($teacher, $type, $overdueDate, $force);
-                if ($reminderTask) {
+                if ((bool) $reminderTask) {
                     $tasks[] = $reminderTask;
                 }
             }
@@ -208,7 +210,7 @@ class EvaluationReminderCommand extends Command
         $needsReminder = false;
         $lastEvaluationDate = null;
 
-        if (empty($recentEvaluations)) {
+        if ((bool) empty($recentEvaluations)) {
             // 没有评价记录，需要提醒
             $needsReminder = true;
         } else {
@@ -222,7 +224,7 @@ class EvaluationReminderCommand extends Command
         }
 
         // 检查是否最近已发送过提醒（除非强制发送）
-        if ($needsReminder && !$force) {
+        if ($needsReminder && (bool) !$force) {
             $recentReminders = $this->getRecentReminders($teacher->getId(), $evaluationType, 3); // 最近3天
             if (!empty($recentReminders)) {
                 $needsReminder = false;
@@ -258,7 +260,7 @@ class EvaluationReminderCommand extends Command
             $evaluationType = $task['evaluation_type'];
             $evaluators = $task['evaluators'];
 
-            if (empty($evaluators)) {
+            if ((bool) empty($evaluators)) {
                 $reminderResults['skipped_reminders']++;
                 $io->text("跳过教师 {$teacher->getTeacherName()} 的 {$evaluationType} 评价提醒 (无评价者)");
                 return;

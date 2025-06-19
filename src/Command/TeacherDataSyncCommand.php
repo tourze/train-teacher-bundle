@@ -17,12 +17,14 @@ use Tourze\TrainTeacherBundle\Service\TeacherService;
  * 用于定期同步教师数据，检查数据一致性和完整性
  */
 #[AsCommand(
-    name: 'teacher:data:sync',
+    name: self::NAME,
     description: '同步教师数据，检查数据一致性和完整性'
 )]
 class TeacherDataSyncCommand extends Command
 {
-    public function __construct(
+    
+    public const NAME = 'teacher:data:sync';
+public function __construct(
         private readonly TeacherService $teacherService,
         private readonly TeacherRepository $teacherRepository,
         private readonly EntityManagerInterface $entityManager
@@ -62,14 +64,14 @@ class TeacherDataSyncCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $isDryRun = $input->getOption('dry-run');
+        $isDryRun = (bool) $input->getOption('dry-run');
         $fixData = $input->getOption('fix-data');
         $checkDuplicates = $input->getOption('check-duplicates');
         $updateStatus = $input->getOption('update-status');
 
         $io->title('教师数据同步');
 
-        if ($isDryRun) {
+        if ((bool) $isDryRun) {
             $io->note('运行在预览模式，不会执行实际的数据修改操作');
         }
 
@@ -97,19 +99,19 @@ class TeacherDataSyncCommand extends Command
             $io->progressFinish();
 
             // 检查重复数据
-            if ($checkDuplicates) {
+            if ((bool) $checkDuplicates) {
                 $this->checkDuplicateData($syncResults, $isDryRun, $fixData, $io);
             }
 
             // 更新教师状态
-            if ($updateStatus) {
+            if ((bool) $updateStatus) {
                 $this->updateTeacherStatus($syncResults, $isDryRun, $io);
             }
 
             // 输出同步结果
             $this->displaySyncResults($syncResults, $io);
 
-            if (!$isDryRun && $fixData && $syncResults['fixed_issues'] > 0) {
+            if (!$isDryRun && (bool) $fixData&& $syncResults['fixed_issues'] > 0) {
                 $this->entityManager->flush();
                 $io->success('数据同步完成，已修复 ' . $syncResults['fixed_issues'] . ' 个问题');
             } else {
@@ -144,7 +146,7 @@ class TeacherDataSyncCommand extends Command
 
         if (empty($teacher->getTeacherCode())) {
             $issues[] = '教师编号为空';
-            if ($fixData && !$isDryRun) {
+            if ($fixData && (bool) !$isDryRun) {
                 $teacher->setTeacherCode($this->generateTeacherCode());
                 $syncResults['fixed_issues']++;
             }
@@ -170,7 +172,7 @@ class TeacherDataSyncCommand extends Command
         // 检查教师状态
         if (!in_array($teacher->getTeacherStatus(), ['active', 'inactive', 'suspended', 'resigned'])) {
             $issues[] = '教师状态无效: ' . $teacher->getTeacherStatus();
-            if ($fixData && !$isDryRun) {
+            if ($fixData && (bool) !$isDryRun) {
                 $teacher->setTeacherStatus('active');
                 $syncResults['fixed_issues']++;
             }

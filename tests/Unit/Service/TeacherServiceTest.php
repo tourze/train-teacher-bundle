@@ -37,18 +37,18 @@ class TeacherServiceTest extends TestCase
             'teacherName' => '张三',
             'teacherType' => '专职',
             'gender' => '男',
-            'birthDate' => new \DateTime('1980-01-01'),
+            'birthDate' => new \DateTimeImmutable('1980-01-01'),
             'idCard' => '110101198001011234',
             'phone' => '13800138000',
             'email' => 'zhangsan@example.com',
             'education' => '本科',
             'major' => '安全工程',
             'graduateSchool' => '北京理工大学',
-            'graduateDate' => new \DateTime('2002-07-01'),
+            'graduateDate' => new \DateTimeImmutable('2002-07-01'),
             'workExperience' => 20,
             'specialties' => ['安全管理', '风险评估'],
             'teacherStatus' => '在职',
-            'joinDate' => new \DateTime('2005-03-01'),
+            'joinDate' => new \DateTimeImmutable('2005-03-01'),
         ];
 
         // Mock repository methods to return null (no duplicates)
@@ -91,16 +91,16 @@ class TeacherServiceTest extends TestCase
             'teacherName' => '张三',
             'teacherType' => '专职',
             'gender' => '男',
-            'birthDate' => new \DateTime('1980-01-01'),
+            'birthDate' => new \DateTimeImmutable('1980-01-01'),
             'idCard' => '110101198001011234',
             'phone' => '13800138000',
             'education' => '本科',
             'major' => '安全工程',
             'graduateSchool' => '北京理工大学',
-            'graduateDate' => new \DateTime('2002-07-01'),
+            'graduateDate' => new \DateTimeImmutable('2002-07-01'),
             'workExperience' => 20,
             'teacherStatus' => '在职',
-            'joinDate' => new \DateTime('2005-03-01'),
+            'joinDate' => new \DateTimeImmutable('2005-03-01'),
         ];
 
         $this->teacherRepository

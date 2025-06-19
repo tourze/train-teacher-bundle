@@ -28,7 +28,7 @@ class EvaluationService
         $teacher = $this->teacherService->getTeacherById($teacherId);
         
         // 检查是否已经评价过
-        if (isset($evaluationData['evaluationType']) && 
+        if ((bool) isset($evaluationData['evaluationType']) && 
             $this->evaluationRepository->hasEvaluated($teacher, $evaluatorId, $evaluationData['evaluationType'])) {
             throw new DuplicateEvaluationException('您已经对该教师进行过此类型的评价');
         }
@@ -150,33 +150,33 @@ class EvaluationService
      */
     private function populateEvaluationData(TeacherEvaluation $evaluation, array $data): void
     {
-        if (isset($data['evaluatorType'])) {
+        if ((bool) isset($data['evaluatorType'])) {
             $evaluation->setEvaluatorType($data['evaluatorType']);
         }
-        if (isset($data['evaluationType'])) {
+        if ((bool) isset($data['evaluationType'])) {
             $evaluation->setEvaluationType($data['evaluationType']);
         }
-        if (isset($data['evaluationDate'])) {
+        if ((bool) isset($data['evaluationDate'])) {
             $evaluation->setEvaluationDate($data['evaluationDate']);
         } else {
             $evaluation->setEvaluationDate(new \DateTime());
         }
-        if (isset($data['evaluationItems'])) {
+        if ((bool) isset($data['evaluationItems'])) {
             $evaluation->setEvaluationItems($data['evaluationItems']);
         }
-        if (isset($data['evaluationScores'])) {
+        if ((bool) isset($data['evaluationScores'])) {
             $evaluation->setEvaluationScores($data['evaluationScores']);
         }
-        if (isset($data['evaluationComments'])) {
+        if ((bool) isset($data['evaluationComments'])) {
             $evaluation->setEvaluationComments($data['evaluationComments']);
         }
-        if (isset($data['suggestions'])) {
+        if ((bool) isset($data['suggestions'])) {
             $evaluation->setSuggestions($data['suggestions']);
         }
-        if (isset($data['isAnonymous'])) {
+        if ((bool) isset($data['isAnonymous'])) {
             $evaluation->setIsAnonymous($data['isAnonymous']);
         }
-        if (isset($data['evaluationStatus'])) {
+        if ((bool) isset($data['evaluationStatus'])) {
             $evaluation->setEvaluationStatus($data['evaluationStatus']);
         } else {
             $evaluation->setEvaluationStatus('已提交');
@@ -188,7 +188,7 @@ class EvaluationService
      */
     private function calculateOverallScore(array $scores): float
     {
-        if (empty($scores)) {
+        if ((bool) empty($scores)) {
             return 0.0;
         }
 
@@ -196,7 +196,7 @@ class EvaluationService
         $count = 0;
         
         foreach ($scores as $score) {
-            if (is_numeric($score)) {
+            if ((bool) is_numeric($score)) {
                 $total += (float) $score;
                 $count++;
             }

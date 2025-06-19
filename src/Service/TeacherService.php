@@ -26,19 +26,19 @@ class TeacherService
     public function createTeacher(array $teacherData): Teacher
     {
         // 检查教师编号是否已存在
-        if (isset($teacherData['teacherCode']) && 
+        if ((bool) isset($teacherData['teacherCode']) && 
             $this->teacherRepository->findByTeacherCode($teacherData['teacherCode'])) {
             throw new DuplicateTeacherException('教师编号已存在: ' . $teacherData['teacherCode']);
         }
 
         // 检查身份证号是否已存在
-        if (isset($teacherData['idCard']) && 
+        if ((bool) isset($teacherData['idCard']) && 
             $this->teacherRepository->findByIdCard($teacherData['idCard'])) {
             throw new DuplicateTeacherException('身份证号已存在: ' . $teacherData['idCard']);
         }
 
         // 检查手机号是否已存在
-        if (isset($teacherData['phone']) && 
+        if ((bool) isset($teacherData['phone']) && 
             $this->teacherRepository->findByPhone($teacherData['phone'])) {
             throw new DuplicateTeacherException('手机号已存在: ' . $teacherData['phone']);
         }
@@ -68,7 +68,7 @@ class TeacherService
         $teacher = $this->getTeacherById($teacherId);
         
         // 检查更新的数据是否与其他教师冲突
-        if (isset($teacherData['teacherCode']) && 
+        if ((bool) isset($teacherData['teacherCode']) && 
             $teacherData['teacherCode'] !== $teacher->getTeacherCode()) {
             $existingTeacher = $this->teacherRepository->findByTeacherCode($teacherData['teacherCode']);
             if ($existingTeacher && $existingTeacher->getId() !== $teacherId) {
@@ -76,7 +76,7 @@ class TeacherService
             }
         }
 
-        if (isset($teacherData['idCard']) && 
+        if ((bool) isset($teacherData['idCard']) && 
             $teacherData['idCard'] !== $teacher->getIdCard()) {
             $existingTeacher = $this->teacherRepository->findByIdCard($teacherData['idCard']);
             if ($existingTeacher && $existingTeacher->getId() !== $teacherId) {
@@ -84,7 +84,7 @@ class TeacherService
             }
         }
 
-        if (isset($teacherData['phone']) && 
+        if ((bool) isset($teacherData['phone']) && 
             $teacherData['phone'] !== $teacher->getPhone()) {
             $existingTeacher = $this->teacherRepository->findByPhone($teacherData['phone']);
             if ($existingTeacher && $existingTeacher->getId() !== $teacherId) {
@@ -193,58 +193,58 @@ class TeacherService
      */
     private function populateTeacherData(Teacher $teacher, array $data): void
     {
-        if (isset($data['teacherCode'])) {
+        if ((bool) isset($data['teacherCode'])) {
             $teacher->setTeacherCode($data['teacherCode']);
         }
-        if (isset($data['teacherName'])) {
+        if ((bool) isset($data['teacherName'])) {
             $teacher->setTeacherName($data['teacherName']);
         }
-        if (isset($data['teacherType'])) {
+        if ((bool) isset($data['teacherType'])) {
             $teacher->setTeacherType($data['teacherType']);
         }
-        if (isset($data['gender'])) {
+        if ((bool) isset($data['gender'])) {
             $teacher->setGender($data['gender']);
         }
-        if (isset($data['birthDate'])) {
+        if ((bool) isset($data['birthDate'])) {
             $teacher->setBirthDate($data['birthDate']);
         }
-        if (isset($data['idCard'])) {
+        if ((bool) isset($data['idCard'])) {
             $teacher->setIdCard($data['idCard']);
         }
-        if (isset($data['phone'])) {
+        if ((bool) isset($data['phone'])) {
             $teacher->setPhone($data['phone']);
         }
-        if (isset($data['email'])) {
+        if ((bool) isset($data['email'])) {
             $teacher->setEmail($data['email']);
         }
-        if (isset($data['address'])) {
+        if ((bool) isset($data['address'])) {
             $teacher->setAddress($data['address']);
         }
-        if (isset($data['education'])) {
+        if ((bool) isset($data['education'])) {
             $teacher->setEducation($data['education']);
         }
-        if (isset($data['major'])) {
+        if ((bool) isset($data['major'])) {
             $teacher->setMajor($data['major']);
         }
-        if (isset($data['graduateSchool'])) {
+        if ((bool) isset($data['graduateSchool'])) {
             $teacher->setGraduateSchool($data['graduateSchool']);
         }
-        if (isset($data['graduateDate'])) {
+        if ((bool) isset($data['graduateDate'])) {
             $teacher->setGraduateDate($data['graduateDate']);
         }
-        if (isset($data['workExperience'])) {
+        if ((bool) isset($data['workExperience'])) {
             $teacher->setWorkExperience($data['workExperience']);
         }
-        if (isset($data['specialties'])) {
+        if ((bool) isset($data['specialties'])) {
             $teacher->setSpecialties($data['specialties']);
         }
-        if (isset($data['teacherStatus'])) {
+        if ((bool) isset($data['teacherStatus'])) {
             $teacher->setTeacherStatus($data['teacherStatus']);
         }
-        if (isset($data['profilePhoto'])) {
+        if ((bool) isset($data['profilePhoto'])) {
             $teacher->setProfilePhoto($data['profilePhoto']);
         }
-        if (isset($data['joinDate'])) {
+        if ((bool) isset($data['joinDate'])) {
             $teacher->setJoinDate($data['joinDate']);
         }
     }

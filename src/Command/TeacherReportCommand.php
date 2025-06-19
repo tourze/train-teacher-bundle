@@ -19,12 +19,14 @@ use Tourze\TrainTeacherBundle\Service\TeacherService;
  * 用于生成各种教师相关的报告，包括绩效报告、评价报告、统计报告等
  */
 #[AsCommand(
-    name: 'teacher:report:generate',
+    name: self::NAME,
     description: '生成教师报告，支持多种报告类型'
 )]
 class TeacherReportCommand extends Command
 {
-    public function __construct(
+    
+    public const NAME = 'teacher:report:generate';
+public function __construct(
         private readonly TeacherService $teacherService,
         private readonly EvaluationService $evaluationService,
         private readonly PerformanceService $performanceService,
@@ -132,7 +134,7 @@ class TeacherReportCommand extends Command
             // 生成报告数据
             $reportData = $this->generateReportData($reportType, $teacherId, $period, $teacherType, $teacherStatus, $includeDetails, $topN);
 
-            if (empty($reportData)) {
+            if ((bool) empty($reportData)) {
                 $io->warning('没有找到符合条件的数据');
                 return Command::SUCCESS;
             }
@@ -141,7 +143,7 @@ class TeacherReportCommand extends Command
             $formattedOutput = $this->formatOutput($reportData, $outputFormat, $reportType);
 
             // 输出结果
-            if ($outputFile) {
+            if ((bool) $outputFile) {
                 $this->saveToFile($formattedOutput, $outputFile, $outputFormat);
                 $io->success("报告已保存到: {$outputFile}");
             } else {
@@ -197,7 +199,7 @@ class TeacherReportCommand extends Command
         bool $includeDetails,
         int $topN
     ): array {
-        if ($teacherId) {
+        if ((bool) $teacherId) {
             // 单个教师绩效报告
             return $this->performanceService->generatePerformanceReport($teacherId);
         } else {
@@ -235,7 +237,7 @@ class TeacherReportCommand extends Command
                     'average_evaluation' => $performance->getAverageEvaluation(),
                 ];
 
-                if ($includeDetails) {
+                if ((bool) $includeDetails) {
                     $teacherData['performance_metrics'] = $performance->getPerformanceMetrics();
                     $teacherData['achievements'] = $performance->getAchievements();
                 }
@@ -257,7 +259,7 @@ class TeacherReportCommand extends Command
         ?string $teacherStatus,
         bool $includeDetails
     ): array {
-        if ($teacherId) {
+        if ((bool) $teacherId) {
             // 单个教师评价报告
             $teacher = $this->teacherService->getTeacherById($teacherId);
             $statistics = $this->evaluationService->getEvaluationStatistics($teacherId);
@@ -297,7 +299,7 @@ class TeacherReportCommand extends Command
                     'evaluation_count' => $statistics['evaluation_count'] ?? 0,
                 ];
 
-                if ($includeDetails) {
+                if ((bool) $includeDetails) {
                     $teacherData['statistics'] = $statistics;
                 }
 
@@ -364,7 +366,7 @@ class TeacherReportCommand extends Command
             }, $topPerformers),
         ];
 
-        if ($includeDetails) {
+        if ((bool) $includeDetails) {
             $report['teacher_statistics'] = $this->teacherService->getTeacherStatistics();
             $report['performance_statistics'] = $this->performanceService->getPerformanceStatistics();
         }
@@ -378,10 +380,10 @@ class TeacherReportCommand extends Command
     private function getFilteredTeachers(?string $teacherType, ?string $teacherStatus): array
     {
         $criteria = [];
-        if ($teacherType) {
+        if ((bool) $teacherType) {
             $criteria['teacherType'] = $teacherType;
         }
-        if ($teacherStatus) {
+        if ((bool) $teacherStatus) {
             $criteria['teacherStatus'] = $teacherStatus;
         }
 
@@ -395,13 +397,13 @@ class TeacherReportCommand extends Command
     {
         // 尝试解析 YYYY-MM 格式
         $date = \DateTime::createFromFormat('Y-m', $period);
-        if ($date) {
+        if ((bool) $date) {
             return $date->setDate($date->format('Y'), $date->format('m'), 1);
         }
 
         // 尝试解析 YYYY 格式
         $date = \DateTime::createFromFormat('Y', $period);
-        if ($date) {
+        if ((bool) $date) {
             return $date->setDate($date->format('Y'), 1, 1);
         }
 
@@ -441,7 +443,7 @@ class TeacherReportCommand extends Command
         // 根据报告类型生成不同的CSV格式
         switch ($reportType) {
             case 'performance':
-                if (isset($data['ranking'])) {
+                if ((bool) isset($data['ranking'])) {
                     $output .= "排名,教师姓名,教师编号,教师类型,绩效分数,绩效等级,平均评价\n";
                     foreach ($data['ranking'] as $item) {
                         $output .= sprintf(
@@ -459,7 +461,7 @@ class TeacherReportCommand extends Command
                 break;
                 
             case 'evaluation':
-                if (isset($data['teachers'])) {
+                if ((bool) isset($data['teachers'])) {
                     $output .= "教师姓名,教师编号,教师类型,平均分数,评价次数\n";
                     foreach ($data['teachers'] as $item) {
                         $output .= sprintf(

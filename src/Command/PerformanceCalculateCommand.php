@@ -18,12 +18,14 @@ use Tourze\TrainTeacherBundle\Service\TeacherService;
  * 用于定期计算教师绩效，支持批量计算和单个教师计算
  */
 #[AsCommand(
-    name: 'teacher:performance:calculate',
+    name: self::NAME,
     description: '计算教师绩效，支持批量计算和单个教师计算'
 )]
 class PerformanceCalculateCommand extends Command
 {
-    public function __construct(
+    
+    public const NAME = 'teacher:performance:calculate';
+public function __construct(
         private readonly PerformanceService $performanceService,
         private readonly TeacherService $teacherService,
         private readonly TeacherRepository $teacherRepository
@@ -89,8 +91,8 @@ class PerformanceCalculateCommand extends Command
         $teacherId = $input->getOption('teacher-id');
         $teacherType = $input->getOption('teacher-type');
         $teacherStatus = $input->getOption('teacher-status');
-        $force = $input->getOption('force');
-        $isDryRun = $input->getOption('dry-run');
+        $force = (bool) $input->getOption('force');
+        $isDryRun = (bool) $input->getOption('dry-run');
         $batchSize = (int) $input->getOption('batch-size');
 
         try {
@@ -105,7 +107,7 @@ class PerformanceCalculateCommand extends Command
             $io->title('教师绩效计算');
             $io->text('计算周期: ' . $period->format('Y年m月'));
 
-            if ($isDryRun) {
+            if ((bool) $isDryRun) {
                 $io->note('运行在预览模式，不会保存计算结果');
             }
 
@@ -121,7 +123,7 @@ class PerformanceCalculateCommand extends Command
             $teachers = $this->getTargetTeachers($teacherId, $teacherType, $teacherStatus);
             $calculationResults['total_teachers'] = count($teachers);
 
-            if (empty($teachers)) {
+            if ((bool) empty($teachers)) {
                 $io->warning('没有找到符合条件的教师');
                 return Command::SUCCESS;
             }
@@ -179,7 +181,7 @@ class PerformanceCalculateCommand extends Command
      */
     private function getTargetTeachers(?string $teacherId, ?string $teacherType, ?string $teacherStatus): array
     {
-        if ($teacherId) {
+        if ((bool) $teacherId) {
             // 计算指定教师
             try {
                 $teacher = $this->teacherService->getTeacherById($teacherId);
@@ -191,10 +193,10 @@ class PerformanceCalculateCommand extends Command
 
         // 根据条件筛选教师
         $criteria = [];
-        if ($teacherType) {
+        if ((bool) $teacherType) {
             $criteria['teacherType'] = $teacherType;
         }
-        if ($teacherStatus) {
+        if ((bool) $teacherStatus) {
             $criteria['teacherStatus'] = $teacherStatus;
         }
 
@@ -227,7 +229,7 @@ class PerformanceCalculateCommand extends Command
                 }
             }
 
-            if ($hasExistingRecord && !$force) {
+            if ($hasExistingRecord && (bool) !$force) {
                 $calculationResults['skipped_teachers']++;
                 $io->text("跳过教师 {$teacherName} (已存在绩效记录)");
                 return;
