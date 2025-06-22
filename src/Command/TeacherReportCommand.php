@@ -219,10 +219,10 @@ public function __construct(
                 $teacher = $performance->getTeacher();
                 
                 // 应用筛选条件
-                if ($teacherType && $teacher->getTeacherType() !== $teacherType) {
+                if ($teacherType !== null && $teacher->getTeacherType() !== $teacherType) {
                     continue;
                 }
-                if ($teacherStatus && $teacher->getTeacherStatus() !== $teacherStatus) {
+                if ($teacherStatus !== null && $teacher->getTeacherStatus() !== $teacherStatus) {
                     continue;
                 }
 
@@ -398,13 +398,13 @@ public function __construct(
         // 尝试解析 YYYY-MM 格式
         $date = \DateTime::createFromFormat('Y-m', $period);
         if ((bool) $date) {
-            return $date->setDate($date->format('Y'), $date->format('m'), 1);
+            return $date->setDate((int) $date->format('Y'), (int) $date->format('m'), 1);
         }
 
         // 尝试解析 YYYY 格式
         $date = \DateTime::createFromFormat('Y', $period);
         if ((bool) $date) {
-            return $date->setDate($date->format('Y'), 1, 1);
+            return $date->setDate((int) $date->format('Y'), 1, 1);
         }
 
         throw new \InvalidArgumentException('无效的周期格式: ' . $period);

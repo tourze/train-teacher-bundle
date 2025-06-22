@@ -10,7 +10,6 @@ use Symfony\Component\Console\Tester\CommandTester;
 use Tourze\TrainTeacherBundle\Command\TeacherDataSyncCommand;
 use Tourze\TrainTeacherBundle\Entity\Teacher;
 use Tourze\TrainTeacherBundle\Repository\TeacherRepository;
-use Tourze\TrainTeacherBundle\Service\TeacherService;
 
 /**
  * TeacherDataSyncCommand单元测试
@@ -19,18 +18,15 @@ class TeacherDataSyncCommandTest extends TestCase
 {
     private TeacherDataSyncCommand $command;
     private CommandTester $commandTester;
-    private TeacherService&MockObject $teacherService;
     private TeacherRepository&MockObject $teacherRepository;
     private EntityManagerInterface&MockObject $entityManager;
 
     protected function setUp(): void
     {
-        $this->teacherService = $this->createMock(TeacherService::class);
         $this->teacherRepository = $this->createMock(TeacherRepository::class);
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
 
         $this->command = new TeacherDataSyncCommand(
-            $this->teacherService,
             $this->teacherRepository,
             $this->entityManager
         );
@@ -237,15 +233,15 @@ class TeacherDataSyncCommandTest extends TestCase
         $teacher->setPhone($phone);
         $teacher->setTeacherType('专职');
         $teacher->setGender('男');
-        $teacher->setBirthDate(new \DateTimeImmutable('1980-01-01'));
+        $teacher->setBirthDate(new \DateTime('1980-01-01'));
         $teacher->setIdCard('110101198001011234');
         $teacher->setEducation('本科');
         $teacher->setMajor('安全工程');
         $teacher->setGraduateSchool('北京理工大学');
-        $teacher->setGraduateDate(new \DateTimeImmutable('2002-07-01'));
+        $teacher->setGraduateDate(new \DateTime('2002-07-01'));
         $teacher->setWorkExperience(20);
         $teacher->setTeacherStatus('在职');
-        $teacher->setJoinDate(new \DateTimeImmutable('2005-03-01'));
+        $teacher->setJoinDate(new \DateTime('2005-03-01'));
 
         return $teacher;
     }

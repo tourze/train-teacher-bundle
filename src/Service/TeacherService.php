@@ -27,19 +27,19 @@ class TeacherService
     {
         // 检查教师编号是否已存在
         if ((bool) isset($teacherData['teacherCode']) && 
-            $this->teacherRepository->findByTeacherCode($teacherData['teacherCode'])) {
+            $this->teacherRepository->findByTeacherCode($teacherData['teacherCode']) !== null) {
             throw new DuplicateTeacherException('教师编号已存在: ' . $teacherData['teacherCode']);
         }
 
         // 检查身份证号是否已存在
         if ((bool) isset($teacherData['idCard']) && 
-            $this->teacherRepository->findByIdCard($teacherData['idCard'])) {
+            $this->teacherRepository->findByIdCard($teacherData['idCard']) !== null) {
             throw new DuplicateTeacherException('身份证号已存在: ' . $teacherData['idCard']);
         }
 
         // 检查手机号是否已存在
         if ((bool) isset($teacherData['phone']) && 
-            $this->teacherRepository->findByPhone($teacherData['phone'])) {
+            $this->teacherRepository->findByPhone($teacherData['phone']) !== null) {
             throw new DuplicateTeacherException('手机号已存在: ' . $teacherData['phone']);
         }
 
@@ -71,7 +71,7 @@ class TeacherService
         if ((bool) isset($teacherData['teacherCode']) && 
             $teacherData['teacherCode'] !== $teacher->getTeacherCode()) {
             $existingTeacher = $this->teacherRepository->findByTeacherCode($teacherData['teacherCode']);
-            if ($existingTeacher && $existingTeacher->getId() !== $teacherId) {
+            if ($existingTeacher !== null && $existingTeacher->getId() !== $teacherId) {
                 throw new DuplicateTeacherException('教师编号已存在: ' . $teacherData['teacherCode']);
             }
         }
@@ -79,7 +79,7 @@ class TeacherService
         if ((bool) isset($teacherData['idCard']) && 
             $teacherData['idCard'] !== $teacher->getIdCard()) {
             $existingTeacher = $this->teacherRepository->findByIdCard($teacherData['idCard']);
-            if ($existingTeacher && $existingTeacher->getId() !== $teacherId) {
+            if ($existingTeacher !== null && $existingTeacher->getId() !== $teacherId) {
                 throw new DuplicateTeacherException('身份证号已存在: ' . $teacherData['idCard']);
             }
         }
@@ -87,7 +87,7 @@ class TeacherService
         if ((bool) isset($teacherData['phone']) && 
             $teacherData['phone'] !== $teacher->getPhone()) {
             $existingTeacher = $this->teacherRepository->findByPhone($teacherData['phone']);
-            if ($existingTeacher && $existingTeacher->getId() !== $teacherId) {
+            if ($existingTeacher !== null && $existingTeacher->getId() !== $teacherId) {
                 throw new DuplicateTeacherException('手机号已存在: ' . $teacherData['phone']);
             }
         }
@@ -106,7 +106,7 @@ class TeacherService
     public function getTeacherById(string $teacherId): Teacher
     {
         $teacher = $this->teacherRepository->find($teacherId);
-        if (!$teacher) {
+        if ($teacher === null) {
             throw new TeacherNotFoundException('教师不存在: ' . $teacherId);
         }
         return $teacher;
@@ -118,7 +118,7 @@ class TeacherService
     public function getTeacherByCode(string $teacherCode): Teacher
     {
         $teacher = $this->teacherRepository->findByTeacherCode($teacherCode);
-        if (!$teacher) {
+        if ($teacher === null) {
             throw new TeacherNotFoundException('教师不存在: ' . $teacherCode);
         }
         return $teacher;
@@ -264,7 +264,7 @@ class TeacherService
     {
         $prefix = 'T';
         $timestamp = date('Ymd');
-        $random = str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
+        $random = str_pad((string) mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
         
         return $prefix . $timestamp . $random;
     }

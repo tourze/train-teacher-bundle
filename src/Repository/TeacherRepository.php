@@ -120,4 +120,70 @@ class TeacherRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * 查找重复的教师编号
+     */
+    public function findDuplicateTeacherCodes(): array
+    {
+        $result = $this->createQueryBuilder('t')
+            ->select('t.teacherCode, COUNT(t.id) as cnt')
+            ->groupBy('t.teacherCode')
+            ->having('cnt > 1')
+            ->getQuery()
+            ->getResult();
+
+        return array_column($result, 'teacherCode');
+    }
+
+    /**
+     * 查找重复的身份证号
+     */
+    public function findDuplicateIdCards(): array
+    {
+        $result = $this->createQueryBuilder('t')
+            ->select('t.idCard, COUNT(t.id) as cnt')
+            ->where('t.idCard IS NOT NULL')
+            ->andWhere('t.idCard != :empty')
+            ->setParameter('empty', '')
+            ->groupBy('t.idCard')
+            ->having('cnt > 1')
+            ->getQuery()
+            ->getResult();
+
+        return array_column($result, 'idCard');
+    }
+
+    /**
+     * 查找重复的手机号
+     */
+    public function findDuplicatePhones(): array
+    {
+        $result = $this->createQueryBuilder('t')
+            ->select('t.phone, COUNT(t.id) as cnt')
+            ->where('t.phone IS NOT NULL')
+            ->andWhere('t.phone != :empty')
+            ->setParameter('empty', '')
+            ->groupBy('t.phone')
+            ->having('cnt > 1')
+            ->getQuery()
+            ->getResult();
+
+        return array_column($result, 'phone');
+    }
+
+    /**
+     * 查找长期未活跃的教师
+     */
+    public function findInactiveTeachers(int $days): array
+    {
+        $inactiveDate = new \DateTime();
+        $inactiveDate->modify("-{$days} days");
+
+        return $this->createQueryBuilder('t')
+            ->where('t.lastActiveTime < :inactiveDate')
+            ->setParameter('inactiveDate', $inactiveDate)
+            ->getQuery()
+            ->getResult();
+    }
 } 

@@ -68,7 +68,7 @@ class TeacherEvaluationTest extends TestCase
 
     public function test_evaluation_date_getter_and_setter(): void
     {
-        $date = new \DateTimeImmutable('2024-01-01');
+        $date = new \DateTime('2024-01-01');
         $this->evaluation->setEvaluationDate($date);
         
         $this->assertEquals($date, $this->evaluation->getEvaluationDate());
@@ -172,7 +172,7 @@ class TeacherEvaluationTest extends TestCase
 
     public function test_create_time_getter_and_setter(): void
     {
-        $createTime = new \DateTimeImmutable('2024-01-01 10:00:00');
+        $createTime = new \DateTime('2024-01-01 10:00:00');
         $this->evaluation->setCreateTime($createTime);
         
         $this->assertEquals($createTime, $this->evaluation->getCreateTime());
@@ -197,7 +197,7 @@ class TeacherEvaluationTest extends TestCase
 
     public function test_complete_evaluation_data(): void
     {
-        $evaluationDate = new \DateTimeImmutable('2024-01-15');
+        $evaluationDate = new \DateTime('2024-01-15');
         $items = ['教学态度', '专业水平', '沟通能力', '课堂管理'];
         $scores = [
             '教学态度' => 5,

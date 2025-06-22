@@ -10,19 +10,16 @@ use Stringable;
  * 教师评价实体
  * 管理学员、同行、管理层对教师的评价信息
  */
-#[ORM\Entity(repositoryClass: 'Tourze\TrainTeacherBundle\Repository\TeacherEvaluationRepository')]
-#[ORM\Table(name: 'train_teacher_evaluation', options: ['comment' => '表描述'])]
+#[ORM\Entity(repositoryClass: \Tourze\TrainTeacherBundle\Repository\TeacherEvaluationRepository::class)]
+#[ORM\Table(name: 'train_teacher_evaluation', options: ['comment' => '教师评价表'])]
 #[ORM\Index(columns: ['teacher_id'], name: 'idx_evaluation_teacher_id')]
 #[ORM\Index(columns: ['evaluator_type'], name: 'idx_evaluator_type')]
 #[ORM\Index(columns: ['evaluation_date'], name: 'idx_evaluation_date')]
 #[ORM\Index(columns: ['evaluation_status'], name: 'idx_evaluation_status')]
 class TeacherEvaluation implements Stringable
 {
-    /**
-     * 评价ID
-     */
     #[ORM\Id]
-#[ORM\Column(type: Types::STRING, length: 36, options: ['comment' => '字段说明'])]
+    #[ORM\Column(type: Types::STRING, length: 36, options: ['comment' => '评价ID'])]
     private string $id;
 
     /**
@@ -32,81 +29,45 @@ class TeacherEvaluation implements Stringable
     #[ORM\JoinColumn(name: 'teacher_id', referencedColumnName: 'id', nullable: false)]
     private Teacher $teacher;
 
-    /**
-     * 评价者类型（学员、同行、管理层、自我）
-     */
-#[ORM\Column(name: 'evaluator_type', type: Types::STRING, length: 20, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'evaluator_type', type: Types::STRING, length: 20, options: ['comment' => '评价者类型（学员、同行、管理层、自我）'])]
     private string $evaluatorType;
 
-    /**
-     * 评价者ID
-     */
-#[ORM\Column(name: 'evaluator_id', type: Types::STRING, length: 36, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'evaluator_id', type: Types::STRING, length: 36, options: ['comment' => '评价者ID'])]
     private string $evaluatorId;
 
-    /**
-     * 评价类型
-     */
-#[ORM\Column(name: 'evaluation_type', type: Types::STRING, length: 50, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'evaluation_type', type: Types::STRING, length: 50, options: ['comment' => '评价类型'])]
     private string $evaluationType;
 
-    /**
-     * 评价日期
-     */
-#[ORM\Column(name: 'evaluation_date', type: Types::DATE_MUTABLE, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'evaluation_date', type: Types::DATE_MUTABLE, options: ['comment' => '评价日期'])]
     private \DateTimeInterface $evaluationDate;
 
-    /**
-     * 评价项目
-     */
-#[ORM\Column(name: 'evaluation_items', type: Types::JSON, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'evaluation_items', type: Types::JSON, options: ['comment' => '评价项目'])]
     private array $evaluationItems = [];
 
-    /**
-     * 评价分数
-     */
-#[ORM\Column(name: 'evaluation_scores', type: Types::JSON, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'evaluation_scores', type: Types::JSON, options: ['comment' => '评价分数'])]
     private array $evaluationScores = [];
 
-    /**
-     * 总体评分
-     */
-#[ORM\Column(name: 'overall_score', type: Types::DECIMAL, precision: 3, scale: 1, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'overall_score', type: Types::DECIMAL, precision: 3, scale: 1, options: ['comment' => '总体评分'])]
     private float $overallScore;
 
-    /**
-     * 评价意见
-     */
-    #[ORM\Column(name: 'evaluation_comments', type: Types::TEXT, nullable: true)]
+    #[ORM\Column(name: 'evaluation_comments', type: Types::TEXT, nullable: true, options: ['comment' => '评价意见'])]
     private ?string $evaluationComments = null;
 
-    /**
-     * 建议
-     */
-#[ORM\Column(type: Types::JSON, options: ['comment' => '字段说明'])]
+    #[ORM\Column(type: Types::JSON, options: ['comment' => '建议'])]
     private array $suggestions = [];
 
-    /**
-     * 是否匿名
-     */
-#[ORM\Column(name: 'is_anonymous', type: Types::BOOLEAN, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'is_anonymous', type: Types::BOOLEAN, options: ['comment' => '是否匿名'])]
     private bool $isAnonymous = false;
 
-    /**
-     * 评价状态
-     */
-#[ORM\Column(name: 'evaluation_status', type: Types::STRING, length: 20, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'evaluation_status', type: Types::STRING, length: 20, options: ['comment' => '评价状态'])]
     private string $evaluationStatus;
 
-    /**
-     * 创建时间
-     */
-#[ORM\Column(name: 'create_time', type: Types::DATETIME_IMMUTABLE, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'create_time', type: Types::DATETIME_IMMUTABLE, options: ['comment' => '创建时间'])]
     private \DateTimeInterface $createTime;
 
     public function __construct()
     {
-        $this->createTime = new \DateTime();
+        $this->createTime = new \DateTimeImmutable();
     }
 
     public function getId(): string

@@ -41,7 +41,7 @@ class PerformanceServiceTest extends TestCase
     public function test_calculate_performance_creates_new_record(): void
     {
         $teacherId = 'teacher_123';
-        $period = new \DateTimeImmutable('2024-01-01');
+        $period = new \DateTime('2024-01-01');
         $teacher = new Teacher();
         $teacher->setId($teacherId);
 
@@ -85,7 +85,7 @@ class PerformanceServiceTest extends TestCase
     public function test_calculate_performance_updates_existing_record(): void
     {
         $teacherId = 'teacher_123';
-        $period = new \DateTimeImmutable('2024-01-01');
+        $period = new \DateTime('2024-01-01');
         $teacher = new Teacher();
         $teacher->setId($teacherId);
 
@@ -205,7 +205,7 @@ class PerformanceServiceTest extends TestCase
     public function test_compare_teacher_performance(): void
     {
         $teacherIds = ['teacher_1', 'teacher_2', 'teacher_3'];
-        $period = new \DateTimeImmutable('2024-01-01');
+        $period = new \DateTime('2024-01-01');
         $comparison = [
             ['teacherId' => 'teacher_1', 'performanceScore' => 4.5],
             ['teacherId' => 'teacher_2', 'performanceScore' => 4.3],
@@ -332,7 +332,7 @@ class PerformanceServiceTest extends TestCase
 
     public function test_get_performance_ranking_by_period(): void
     {
-        $period = new \DateTimeImmutable('2024-01-01');
+        $period = new \DateTime('2024-01-01');
         $limit = 5;
         $ranking = [
             ['teacherId' => 'teacher_1', 'performanceScore' => 4.8],
@@ -385,7 +385,7 @@ class PerformanceServiceTest extends TestCase
             'studentSatisfaction' => $score,
         ]);
         $performance->method('getAchievements')->willReturn(['优秀教师']);
-        $performance->method('getPerformancePeriod')->willReturn(new \DateTimeImmutable('2024-01-01'));
+        $performance->method('getPerformancePeriod')->willReturn(new \DateTime('2024-01-01'));
         return $performance;
     }
 } 

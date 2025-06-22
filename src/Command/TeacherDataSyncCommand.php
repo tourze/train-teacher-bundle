@@ -10,7 +10,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Tourze\TrainTeacherBundle\Repository\TeacherRepository;
-use Tourze\TrainTeacherBundle\Service\TeacherService;
 
 /**
  * 教师数据同步命令
@@ -25,7 +24,6 @@ class TeacherDataSyncCommand extends Command
     
     public const NAME = 'teacher:data:sync';
 public function __construct(
-        private readonly TeacherService $teacherService,
         private readonly TeacherRepository $teacherRepository,
         private readonly EntityManagerInterface $entityManager
     ) {
@@ -284,7 +282,7 @@ public function __construct(
      */
     private function generateTeacherCode(): string
     {
-        return 'T' . date('Ymd') . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
+        return 'T' . date('Ymd') . str_pad((string) mt_rand(1, 9999), 4, '0', STR_PAD_LEFT);
     }
 
     /**

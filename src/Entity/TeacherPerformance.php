@@ -10,18 +10,15 @@ use Stringable;
  * 教师绩效实体
  * 管理教师的绩效评估、指标统计和等级评定
  */
-#[ORM\Entity(repositoryClass: 'Tourze\TrainTeacherBundle\Repository\TeacherPerformanceRepository')]
-#[ORM\Table(name: 'train_teacher_performance', options: ['comment' => '表描述'])]
+#[ORM\Entity(repositoryClass: \Tourze\TrainTeacherBundle\Repository\TeacherPerformanceRepository::class)]
+#[ORM\Table(name: 'train_teacher_performance', options: ['comment' => '教师绩效表'])]
 #[ORM\Index(columns: ['teacher_id'], name: 'idx_performance_teacher_id')]
 #[ORM\Index(columns: ['performance_period'], name: 'idx_performance_period')]
 #[ORM\Index(columns: ['performance_level'], name: 'idx_performance_level')]
 class TeacherPerformance implements Stringable
 {
-    /**
-     * 绩效ID
-     */
     #[ORM\Id]
-#[ORM\Column(type: Types::STRING, length: 36, options: ['comment' => '字段说明'])]
+    #[ORM\Column(type: Types::STRING, length: 36, options: ['comment' => '绩效ID'])]
     private string $id;
 
     /**
@@ -31,51 +28,30 @@ class TeacherPerformance implements Stringable
     #[ORM\JoinColumn(name: 'teacher_id', referencedColumnName: 'id', nullable: false)]
     private Teacher $teacher;
 
-    /**
-     * 绩效周期
-     */
-#[ORM\Column(name: 'performance_period', type: Types::DATE_MUTABLE, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'performance_period', type: Types::DATE_MUTABLE, options: ['comment' => '绩效周期'])]
     private \DateTimeInterface $performancePeriod;
 
-    /**
-     * 平均评价分数
-     */
-#[ORM\Column(name: 'average_evaluation', type: Types::DECIMAL, precision: 3, scale: 1, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'average_evaluation', type: Types::DECIMAL, precision: 3, scale: 1, options: ['comment' => '平均评价分数'])]
     private float $averageEvaluation;
 
-    /**
-     * 绩效指标
-     */
-#[ORM\Column(name: 'performance_metrics', type: Types::JSON, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'performance_metrics', type: Types::JSON, options: ['comment' => '绩效指标'])]
     private array $performanceMetrics = [];
 
-    /**
-     * 绩效分数
-     */
-#[ORM\Column(name: 'performance_score', type: Types::DECIMAL, precision: 5, scale: 2, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'performance_score', type: Types::DECIMAL, precision: 5, scale: 2, options: ['comment' => '绩效分数'])]
     private float $performanceScore;
 
-    /**
-     * 绩效等级
-     */
-#[ORM\Column(name: 'performance_level', type: Types::STRING, length: 20, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'performance_level', type: Types::STRING, length: 20, options: ['comment' => '绩效等级'])]
     private string $performanceLevel;
 
-    /**
-     * 成就
-     */
-#[ORM\Column(type: Types::JSON, options: ['comment' => '字段说明'])]
+    #[ORM\Column(type: Types::JSON, options: ['comment' => '成就'])]
     private array $achievements = [];
 
-    /**
-     * 创建时间
-     */
-#[ORM\Column(name: 'create_time', type: Types::DATETIME_IMMUTABLE, options: ['comment' => '字段说明'])]
+    #[ORM\Column(name: 'create_time', type: Types::DATETIME_IMMUTABLE, options: ['comment' => '创建时间'])]
     private \DateTimeInterface $createTime;
 
     public function __construct()
     {
-        $this->createTime = new \DateTime();
+        $this->createTime = new \DateTimeImmutable();
     }
 
     public function getId(): string

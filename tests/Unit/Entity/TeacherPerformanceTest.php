@@ -44,7 +44,7 @@ class TeacherPerformanceTest extends TestCase
 
     public function test_performance_period_getter_and_setter(): void
     {
-        $period = new \DateTimeImmutable('2024-01-01');
+        $period = new \DateTime('2024-01-01');
         $this->performance->setPerformancePeriod($period);
         
         $this->assertEquals($period, $this->performance->getPerformancePeriod());
@@ -112,7 +112,7 @@ class TeacherPerformanceTest extends TestCase
 
     public function test_create_time_getter_and_setter(): void
     {
-        $createTime = new \DateTimeImmutable('2024-01-01 10:00:00');
+        $createTime = new \DateTime('2024-01-01 10:00:00');
         $this->performance->setCreateTime($createTime);
         
         $this->assertEquals($createTime, $this->performance->getCreateTime());
@@ -120,7 +120,7 @@ class TeacherPerformanceTest extends TestCase
 
     public function test_fluent_interface(): void
     {
-        $period = new \DateTimeImmutable('2024-01-01');
+        $period = new \DateTime('2024-01-01');
         
         $result = $this->performance
             ->setId('perf_001')
@@ -139,7 +139,7 @@ class TeacherPerformanceTest extends TestCase
 
     public function test_complete_performance_data(): void
     {
-        $period = new \DateTimeImmutable('2024-01-01');
+        $period = new \DateTime('2024-01-01');
         $metrics = [
             'teachingHours' => 80.0,
             'studentSatisfaction' => 85.0,
@@ -247,9 +247,9 @@ class TeacherPerformanceTest extends TestCase
     {
         // 测试不同的日期格式
         $periods = [
-            new \DateTimeImmutable('2024-01-01'),
-            new \DateTimeImmutable('2024-02-01'),
-            new \DateTimeImmutable('2024-12-31'),
+            new \DateTime('2024-01-01'),
+            new \DateTime('2024-02-01'),
+            new \DateTime('2024-12-31'),
         ];
         
         foreach ($periods as $period) {

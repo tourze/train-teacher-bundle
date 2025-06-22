@@ -102,7 +102,7 @@ public function __construct(
                 $io->error('无效的绩效周期格式，请使用 YYYY-MM 格式');
                 return Command::FAILURE;
             }
-            $period->setDate($period->format('Y'), $period->format('m'), 1);
+            $period->setDate((int) $period->format('Y'), (int) $period->format('m'), 1);
 
             $io->title('教师绩效计算');
             $io->text('计算周期: ' . $period->format('Y年m月'));

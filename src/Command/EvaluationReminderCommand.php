@@ -10,7 +10,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Tourze\TrainTeacherBundle\Repository\TeacherEvaluationRepository;
 use Tourze\TrainTeacherBundle\Repository\TeacherRepository;
-use Tourze\TrainTeacherBundle\Service\EvaluationService;
 use Tourze\TrainTeacherBundle\Service\TeacherService;
 
 /**
@@ -26,7 +25,6 @@ class EvaluationReminderCommand extends Command
     
     public const NAME = 'teacher:evaluation:reminder';
 public function __construct(
-        private readonly EvaluationService $evaluationService,
         private readonly TeacherService $teacherService,
         private readonly TeacherRepository $teacherRepository,
         private readonly TeacherEvaluationRepository $evaluationRepository
@@ -181,7 +179,7 @@ public function __construct(
 
         foreach ($teachers as $teacher) {
             // 检查各种类型的评价提醒
-            $evaluationTypes = $evaluationType ? [$evaluationType] : ['student', 'peer', 'management', 'self'];
+            $evaluationTypes = $evaluationType !== null ? [$evaluationType] : ['student', 'peer', 'management', 'self'];
             
             foreach ($evaluationTypes as $type) {
                 $reminderTask = $this->checkEvaluationReminder($teacher, $type, $overdueDate, $force);

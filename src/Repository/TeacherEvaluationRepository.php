@@ -161,4 +161,24 @@ class TeacherEvaluationRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * 获取教师最近的评价记录
+     */
+    public function findRecentEvaluations(Teacher $teacher, string $evaluationType, int $days): array
+    {
+        $startDate = new \DateTime();
+        $startDate->modify("-{$days} days");
+
+        return $this->createQueryBuilder('e')
+            ->where('e.teacher = :teacher')
+            ->andWhere('e.evaluationType = :evaluationType')
+            ->andWhere('e.evaluationDate >= :startDate')
+            ->setParameter('teacher', $teacher)
+            ->setParameter('evaluationType', $evaluationType)
+            ->setParameter('startDate', $startDate)
+            ->orderBy('e.evaluationDate', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

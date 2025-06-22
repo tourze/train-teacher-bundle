@@ -61,7 +61,7 @@ class PerformanceService
         $achievements = $this->calculateAchievements($teacher, $metrics);
         $performance->setAchievements($achievements);
 
-        if (!$existingPerformance) {
+        if ($existingPerformance === null) {
             $this->entityManager->persist($performance);
         }
         $this->entityManager->flush();
@@ -290,6 +290,10 @@ class PerformanceService
 
         $latest = $performances[0];
         $previous = $performances[1];
+
+        if ($latest === null || $previous === null) {
+            return ['message' => '绩效数据异常'];
+        }
 
         $scoreChange = $latest->getPerformanceScore() - $previous->getPerformanceScore();
         $evaluationChange = $latest->getAverageEvaluation() - $previous->getAverageEvaluation();

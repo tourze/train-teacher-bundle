@@ -70,18 +70,18 @@ class TrainTeacherIntegrationTest extends KernelTestCase
             'teacherName' => '张三',
             'teacherType' => '专职',
             'gender' => '男',
-            'birthDate' => new \DateTimeImmutable('1980-01-01'),
+            'birthDate' => new \DateTime('1980-01-01'),
             'idCard' => '110101198001011234',
             'phone' => '13800138000',
             'email' => 'zhangsan@example.com',
             'education' => '本科',
             'major' => '安全工程',
             'graduateSchool' => '北京理工大学',
-            'graduateDate' => new \DateTimeImmutable('2002-07-01'),
+            'graduateDate' => new \DateTime('2002-07-01'),
             'workExperience' => 20,
             'specialties' => ['安全管理', '风险评估'],
             'teacherStatus' => '在职',
-            'joinDate' => new \DateTimeImmutable('2005-03-01'),
+            'joinDate' => new \DateTime('2005-03-01'),
         ];
 
         $teacher = $this->teacherService->createTeacher($teacherData);
@@ -166,7 +166,7 @@ class TrainTeacherIntegrationTest extends KernelTestCase
         $this->createTestEvaluations($teacher);
 
         // 计算绩效
-        $period = new \DateTimeImmutable('2024-01-01');
+        $period = new \DateTime('2024-01-01');
         $performance = $this->performanceService->calculatePerformance($teacher->getId(), $period);
 
         $this->assertInstanceOf(TeacherPerformance::class, $performance);
@@ -196,16 +196,16 @@ class TrainTeacherIntegrationTest extends KernelTestCase
                 'teacherName' => "教师{$i}",
                 'teacherType' => '专职',
                 'gender' => '男',
-                'birthDate' => new \DateTimeImmutable('1980-01-01'),
+                'birthDate' => new \DateTime('1980-01-01'),
                 'idCard' => "11010119800101123{$i}",
                 'phone' => "1380013800{$i}",
                 'education' => '本科',
                 'major' => '安全工程',
                 'graduateSchool' => '北京理工大学',
-                'graduateDate' => new \DateTimeImmutable('2002-07-01'),
+                'graduateDate' => new \DateTime('2002-07-01'),
                 'workExperience' => 20,
                 'teacherStatus' => '在职',
-                'joinDate' => new \DateTimeImmutable('2005-03-01'),
+                'joinDate' => new \DateTime('2005-03-01'),
             ];
             $teachers[] = $this->teacherService->createTeacher($teacherData);
         }
@@ -229,7 +229,7 @@ class TrainTeacherIntegrationTest extends KernelTestCase
         }
 
         // 计算所有教师的绩效
-        $period = new \DateTimeImmutable('2024-01-01');
+        $period = new \DateTime('2024-01-01');
         foreach ($teachers as $teacher) {
             $this->performanceService->calculatePerformance($teacher->getId(), $period);
         }
@@ -260,14 +260,14 @@ class TrainTeacherIntegrationTest extends KernelTestCase
             $fullData = array_merge([
                 'teacherType' => '专职',
                 'gender' => '男',
-                'birthDate' => new \DateTimeImmutable('1980-01-01'),
+                'birthDate' => new \DateTime('1980-01-01'),
                 'education' => '本科',
                 'major' => '安全工程',
                 'graduateSchool' => '北京理工大学',
-                'graduateDate' => new \DateTimeImmutable('2002-07-01'),
+                'graduateDate' => new \DateTime('2002-07-01'),
                 'workExperience' => 20,
                 'teacherStatus' => '在职',
-                'joinDate' => new \DateTimeImmutable('2005-03-01'),
+                'joinDate' => new \DateTime('2005-03-01'),
             ], $teacherData);
             
             $this->teacherService->createTeacher($fullData);
@@ -329,18 +329,18 @@ class TrainTeacherIntegrationTest extends KernelTestCase
             'teacherName' => '测试教师',
             'teacherType' => '专职',
             'gender' => '男',
-            'birthDate' => new \DateTimeImmutable('1980-01-01'),
+            'birthDate' => new \DateTime('1980-01-01'),
             'idCard' => '110101198001011234',
             'phone' => '13800138000',
             'email' => 'test@example.com',
             'education' => '本科',
             'major' => '安全工程',
             'graduateSchool' => '北京理工大学',
-            'graduateDate' => new \DateTimeImmutable('2002-07-01'),
+            'graduateDate' => new \DateTime('2002-07-01'),
             'workExperience' => 20,
             'specialties' => ['安全管理', '风险评估'],
             'teacherStatus' => '在职',
-            'joinDate' => new \DateTimeImmutable('2005-03-01'),
+            'joinDate' => new \DateTime('2005-03-01'),
         ];
 
         return $this->teacherService->createTeacher($teacherData);
