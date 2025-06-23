@@ -159,7 +159,7 @@ class EvaluationService
         if ((bool) isset($data['evaluationDate'])) {
             $evaluation->setEvaluationDate($data['evaluationDate']);
         } else {
-            $evaluation->setEvaluationDate(new \DateTime());
+            $evaluation->setEvaluationDate(new \DateTimeImmutable());
         }
         if ((bool) isset($data['evaluationItems'])) {
             $evaluation->setEvaluationItems($data['evaluationItems']);

@@ -28,7 +28,7 @@ class TeacherPerformance implements Stringable
     #[ORM\JoinColumn(name: 'teacher_id', referencedColumnName: 'id', nullable: false)]
     private Teacher $teacher;
 
-    #[ORM\Column(name: 'performance_period', type: Types::DATE_MUTABLE, options: ['comment' => '绩效周期'])]
+    #[ORM\Column(name: 'performance_period', type: Types::DATE_IMMUTABLE, options: ['comment' => '绩效周期'])]
     private \DateTimeInterface $performancePeriod;
 
     #[ORM\Column(name: 'average_evaluation', type: Types::DECIMAL, precision: 3, scale: 1, options: ['comment' => '平均评价分数'])]

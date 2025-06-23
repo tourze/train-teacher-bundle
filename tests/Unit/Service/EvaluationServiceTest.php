@@ -365,7 +365,7 @@ class EvaluationServiceTest extends TestCase
         $evaluation = $this->evaluationService->submitEvaluation($teacherId, $evaluatorId, $evaluationData);
 
         $this->assertEquals('已提交', $evaluation->getEvaluationStatus());
-        $this->assertInstanceOf(\DateTime::class, $evaluation->getEvaluationDate());
+        $this->assertInstanceOf(\DateTimeImmutable::class, $evaluation->getEvaluationDate());
     }
 
     public function test_submit_evaluation_with_empty_scores(): void
@@ -412,7 +412,7 @@ class EvaluationServiceTest extends TestCase
         $evaluation->method('getOverallScore')->willReturn($score);
         $evaluation->method('getEvaluationScores')->willReturn(['教学态度' => $score]);
         $evaluation->method('getSuggestions')->willReturn(['建议1', '建议2']);
-        $evaluation->method('getEvaluationDate')->willReturn(new \DateTime());
+        $evaluation->method('getEvaluationDate')->willReturn(new \DateTimeImmutable());
         return $evaluation;
     }
 } 

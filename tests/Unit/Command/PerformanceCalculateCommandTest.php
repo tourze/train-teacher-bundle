@@ -315,16 +315,16 @@ class PerformanceCalculateCommandTest extends TestCase
         $teacher->setTeacherName($name);
         $teacher->setTeacherType('专职');
         $teacher->setGender('男');
-        $teacher->setBirthDate(new \DateTime('1980-01-01'));
+        $teacher->setBirthDate(new \DateTimeImmutable('1980-01-01'));
         $teacher->setIdCard('110101198001011234');
         $teacher->setPhone('13800138000');
         $teacher->setEducation('本科');
         $teacher->setMajor('安全工程');
         $teacher->setGraduateSchool('北京理工大学');
-        $teacher->setGraduateDate(new \DateTime('2002-07-01'));
+        $teacher->setGraduateDate(new \DateTimeImmutable('2002-07-01'));
         $teacher->setWorkExperience(20);
         $teacher->setTeacherStatus('在职');
-        $teacher->setJoinDate(new \DateTime('2005-03-01'));
+        $teacher->setJoinDate(new \DateTimeImmutable('2005-03-01'));
         
         return $teacher;
     }

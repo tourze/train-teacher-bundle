@@ -11,3 +11,6 @@ services:
     resource: '../../Repository/'
   Tourze\TrainTeacherBundle\Service\:
     resource: '../../Service/'
+  Tourze\TrainTeacherBundle\EntityListener\:
+    resource: '../../EntityListener/'
+    tags: ['doctrine.orm.entity_listener']

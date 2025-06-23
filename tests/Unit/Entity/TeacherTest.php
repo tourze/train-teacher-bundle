@@ -67,7 +67,7 @@ class TeacherTest extends TestCase
 
     public function test_birth_date_getter_and_setter(): void
     {
-        $birthDate = new \DateTime('1980-01-01');
+        $birthDate = new \DateTimeImmutable('1980-01-01');
         $this->teacher->setBirthDate($birthDate);
         
         $this->assertEquals($birthDate, $this->teacher->getBirthDate());
@@ -145,7 +145,7 @@ class TeacherTest extends TestCase
 
     public function test_graduate_date_getter_and_setter(): void
     {
-        $date = new \DateTime('2002-07-01');
+        $date = new \DateTimeImmutable('2002-07-01');
         $this->teacher->setGraduateDate($date);
         
         $this->assertEquals($date, $this->teacher->getGraduateDate());
@@ -199,7 +199,7 @@ class TeacherTest extends TestCase
 
     public function test_join_date_getter_and_setter(): void
     {
-        $joinDate = new \DateTime('2005-03-01');
+        $joinDate = new \DateTimeImmutable('2005-03-01');
         $this->teacher->setJoinDate($joinDate);
         
         $this->assertEquals($joinDate, $this->teacher->getJoinDate());
@@ -207,7 +207,7 @@ class TeacherTest extends TestCase
 
     public function test_create_time_getter_and_setter(): void
     {
-        $createTime = new \DateTime('2024-01-01 10:00:00');
+        $createTime = new \DateTimeImmutable('2024-01-01 10:00:00');
         $this->teacher->setCreateTime($createTime);
         
         $this->assertEquals($createTime, $this->teacher->getCreateTime());
@@ -215,23 +215,12 @@ class TeacherTest extends TestCase
 
     public function test_update_time_getter_and_setter(): void
     {
-        $updateTime = new \DateTime('2024-01-02 10:00:00');
+        $updateTime = new \DateTimeImmutable('2024-01-02 10:00:00');
         $this->teacher->setUpdateTime($updateTime);
         
         $this->assertEquals($updateTime, $this->teacher->getUpdateTime());
     }
 
-    public function test_update_timestamp_method(): void
-    {
-        $originalUpdateTime = $this->teacher->getUpdateTime();
-        
-        // 等待一毫秒确保时间不同
-        usleep(1000);
-        
-        $this->teacher->updateTimestamp();
-        
-        $this->assertGreaterThan($originalUpdateTime, $this->teacher->getUpdateTime());
-    }
 
     public function test_fluent_interface(): void
     {
@@ -252,9 +241,9 @@ class TeacherTest extends TestCase
 
     public function test_complete_teacher_data(): void
     {
-        $birthDate = new \DateTime('1980-01-01');
-        $graduateDate = new \DateTime('2002-07-01');
-        $joinDate = new \DateTime('2005-03-01');
+        $birthDate = new \DateTimeImmutable('1980-01-01');
+        $graduateDate = new \DateTimeImmutable('2002-07-01');
+        $joinDate = new \DateTimeImmutable('2005-03-01');
         $specialties = ['安全管理', '风险评估', '应急预案'];
 
         $this->teacher

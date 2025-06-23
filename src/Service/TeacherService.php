@@ -93,7 +93,6 @@ class TeacherService
         }
 
         $this->populateTeacherData($teacher, $teacherData);
-        $teacher->updateTimestamp();
 
         $this->entityManager->flush();
 
@@ -147,7 +146,6 @@ class TeacherService
     {
         $teacher = $this->getTeacherById($teacherId);
         $teacher->setTeacherStatus($status);
-        $teacher->updateTimestamp();
 
         $this->entityManager->flush();
 

@@ -385,7 +385,7 @@ class PerformanceServiceTest extends TestCase
             'studentSatisfaction' => $score,
         ]);
         $performance->method('getAchievements')->willReturn(['优秀教师']);
-        $performance->method('getPerformancePeriod')->willReturn(new \DateTime('2024-01-01'));
+        $performance->method('getPerformancePeriod')->willReturn(new \DateTimeImmutable('2024-01-01'));
         return $performance;
     }
 } 

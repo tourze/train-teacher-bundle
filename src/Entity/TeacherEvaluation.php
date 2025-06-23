@@ -38,7 +38,7 @@ class TeacherEvaluation implements Stringable
     #[ORM\Column(name: 'evaluation_type', type: Types::STRING, length: 50, options: ['comment' => '评价类型'])]
     private string $evaluationType;
 
-    #[ORM\Column(name: 'evaluation_date', type: Types::DATE_MUTABLE, options: ['comment' => '评价日期'])]
+    #[ORM\Column(name: 'evaluation_date', type: Types::DATE_IMMUTABLE, options: ['comment' => '评价日期'])]
     private \DateTimeInterface $evaluationDate;
 
     #[ORM\Column(name: 'evaluation_items', type: Types::JSON, options: ['comment' => '评价项目'])]

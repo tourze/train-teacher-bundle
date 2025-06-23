@@ -33,7 +33,7 @@ class Teacher implements Stringable
     #[ORM\Column(type: Types::STRING, length: 10, options: ['comment' => '性别'])]
     private string $gender;
 
-    #[ORM\Column(name: 'birth_date', type: Types::DATE_MUTABLE, options: ['comment' => '出生日期'])]
+    #[ORM\Column(name: 'birth_date', type: Types::DATE_IMMUTABLE, options: ['comment' => '出生日期'])]
     private \DateTimeInterface $birthDate;
 
     #[ORM\Column(name: 'id_card', type: Types::STRING, length: 18, options: ['comment' => '身份证号'])]
@@ -57,7 +57,7 @@ class Teacher implements Stringable
     #[ORM\Column(name: 'graduate_school', type: Types::STRING, length: 100, options: ['comment' => '毕业院校'])]
     private string $graduateSchool;
 
-    #[ORM\Column(name: 'graduate_date', type: Types::DATE_MUTABLE, options: ['comment' => '毕业日期'])]
+    #[ORM\Column(name: 'graduate_date', type: Types::DATE_IMMUTABLE, options: ['comment' => '毕业日期'])]
     private \DateTimeInterface $graduateDate;
 
     #[ORM\Column(name: 'work_experience', type: Types::INTEGER, options: ['comment' => '工作经验（年）'])]
@@ -72,7 +72,7 @@ class Teacher implements Stringable
     #[ORM\Column(name: 'profile_photo', type: Types::STRING, length: 255, nullable: true, options: ['comment' => '头像'])]
     private ?string $profilePhoto = null;
 
-    #[ORM\Column(name: 'join_date', type: Types::DATE_MUTABLE, options: ['comment' => '入职日期'])]
+    #[ORM\Column(name: 'join_date', type: Types::DATE_IMMUTABLE, options: ['comment' => '入职日期'])]
     private \DateTimeInterface $joinDate;
 
     #[ORM\Column(name: 'create_time', type: Types::DATETIME_IMMUTABLE, options: ['comment' => '创建时间'])]
@@ -81,7 +81,7 @@ class Teacher implements Stringable
     #[ORM\Column(name: 'update_time', type: Types::DATETIME_IMMUTABLE, options: ['comment' => '更新时间'])]
     private \DateTimeInterface $updateTime;
 
-    #[ORM\Column(name: 'last_active_time', type: Types::DATETIME_MUTABLE, nullable: true, options: ['comment' => '最后活跃时间'])]
+    #[ORM\Column(name: 'last_active_time', type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '最后活跃时间'])]
     private ?\DateTimeInterface $lastActiveTime = null;
 
     public function __construct()
@@ -332,14 +332,6 @@ class Teacher implements Stringable
         return $this;
     }
 
-    /**
-     * 更新时间戳
-     */
-    #[ORM\PreUpdate]
-    public function updateTimestamp(): void
-    {
-        $this->updateTime = new \DateTimeImmutable();
-    }
 
     public function __toString(): string
     {
