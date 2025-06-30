@@ -5,6 +5,7 @@ namespace Tourze\TrainTeacherBundle\Service;
 use Doctrine\ORM\EntityManagerInterface;
 use Tourze\TrainTeacherBundle\Entity\Teacher;
 use Tourze\TrainTeacherBundle\Entity\TeacherPerformance;
+use Tourze\TrainTeacherBundle\Exception\PerformanceNotFoundException;
 use Tourze\TrainTeacherBundle\Repository\TeacherPerformanceRepository;
 
 /**
@@ -76,7 +77,7 @@ class PerformanceService
     {
         $performance = $this->performanceRepository->find($performanceId);
         if (!$performance) {
-            throw new \InvalidArgumentException('绩效记录不存在: ' . $performanceId);
+            throw new PerformanceNotFoundException('绩效记录不存在: ' . $performanceId);
         }
 
         $performance->setPerformanceMetrics($metrics);

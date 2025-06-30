@@ -9,6 +9,9 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Tourze\TrainTeacherBundle\Exception\InvalidPeriodFormatException;
+use Tourze\TrainTeacherBundle\Exception\InvalidReportTypeException;
+use Tourze\TrainTeacherBundle\Exception\UnsupportedOutputFormatException;
 use Tourze\TrainTeacherBundle\Repository\TeacherRepository;
 use Tourze\TrainTeacherBundle\Service\EvaluationService;
 use Tourze\TrainTeacherBundle\Service\PerformanceService;
@@ -90,7 +93,7 @@ public function __construct(
             )
             ->addOption(
                 'top-n',
-                'n',
+                null,
                 InputOption::VALUE_OPTIONAL,
                 '仅显示前N名（用于排名报告）',
                 10
@@ -184,7 +187,7 @@ public function __construct(
                 return $this->generateSummaryReport($period, $teacherType, $teacherStatus, $includeDetails);
                 
             default:
-                throw new \InvalidArgumentException('不支持的报告类型: ' . $reportType);
+                throw new InvalidReportTypeException('不支持的报告类型: ' . $reportType);
         }
     }
 
@@ -407,7 +410,7 @@ public function __construct(
             return $date->setDate((int) $date->format('Y'), 1, 1);
         }
 
-        throw new \InvalidArgumentException('无效的周期格式: ' . $period);
+        throw new InvalidPeriodFormatException('无效的周期格式: ' . $period);
     }
 
     /**
@@ -429,7 +432,7 @@ public function __construct(
                 return $this->formatPdf($data, $reportType);
                 
             default:
-                throw new \InvalidArgumentException('不支持的输出格式: ' . $format);
+                throw new UnsupportedOutputFormatException('不支持的输出格式: ' . $format);
         }
     }
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\TrainTeacherBundle\Tests\Unit\Entity;
 
 use PHPUnit\Framework\TestCase;
@@ -277,5 +279,17 @@ class TeacherEvaluationTest extends TestCase
         $this->assertEquals([], $this->evaluation->getEvaluationItems());
         $this->assertEquals([], $this->evaluation->getEvaluationScores());
         $this->assertEquals([], $this->evaluation->getSuggestions());
+    }
+
+    public function testClassExists(): void
+    {
+        $this->assertTrue(class_exists(TeacherEvaluation::class));
+    }
+    
+    public function testStringable(): void
+    {
+        $evaluation = new TeacherEvaluation();
+        $evaluation->setId('test-evaluation-id');
+        $this->assertEquals('test-evaluation-id', (string)$evaluation);
     }
 } 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\TrainTeacherBundle\Tests\Unit\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -414,5 +416,10 @@ class EvaluationServiceTest extends TestCase
         $evaluation->method('getSuggestions')->willReturn(['建议1', '建议2']);
         $evaluation->method('getEvaluationDate')->willReturn(new \DateTimeImmutable());
         return $evaluation;
+    }
+
+    public function testClassExists(): void
+    {
+        $this->assertTrue(class_exists(EvaluationService::class));
     }
 } 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\TrainTeacherBundle\Tests\Unit\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -489,5 +491,10 @@ class TeacherServiceTest extends TestCase
         $this->expectExceptionMessage('教师不存在: nonexistent_teacher');
 
         $this->teacherService->deleteTeacher($teacherId);
+    }
+
+    public function testClassExists(): void
+    {
+        $this->assertTrue(class_exists(TeacherService::class));
     }
 } 

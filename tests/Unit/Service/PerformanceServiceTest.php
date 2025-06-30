@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\TrainTeacherBundle\Tests\Unit\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -387,5 +389,10 @@ class PerformanceServiceTest extends TestCase
         $performance->method('getAchievements')->willReturn(['优秀教师']);
         $performance->method('getPerformancePeriod')->willReturn(new \DateTimeImmutable('2024-01-01'));
         return $performance;
+    }
+
+    public function testClassExists(): void
+    {
+        $this->assertTrue(class_exists(PerformanceService::class));
     }
 } 

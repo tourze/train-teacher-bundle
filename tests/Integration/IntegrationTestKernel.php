@@ -3,6 +3,7 @@
 namespace Tourze\TrainTeacherBundle\Tests\Integration;
 
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
+use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\Config\Loader\LoaderInterface;
@@ -17,6 +18,8 @@ use Tourze\TrainTeacherBundle\TrainTeacherBundle;
 class IntegrationTestKernel extends Kernel
 {
     use MicroKernelTrait;
+
+    private static bool $schemaCreated = false;
 
     public function registerBundles(): iterable
     {
@@ -43,13 +46,13 @@ class IntegrationTestKernel extends Kernel
             ],
             'orm' => [
                 'auto_generate_proxy_classes' => true,
-                'auto_mapping' => true,
+                'auto_mapping' => false,
                 'mappings' => [
                     'TrainTeacherBundle' => [
-                        'is_bundle' => true,
                         'type' => 'attribute',
-                        'dir' => 'Entity',
+                        'dir' => __DIR__ . '/../../src/Entity',
                         'prefix' => 'Tourze\TrainTeacherBundle\Entity',
+                        'is_bundle' => false,
                     ],
                 ],
             ],
@@ -88,5 +91,20 @@ class IntegrationTestKernel extends Kernel
     public function getLogDir(): string
     {
         return sys_get_temp_dir() . '/train_teacher_bundle_test/logs';
+    }
+
+    public function createSchema(): void
+    {
+        $entityManager = $this->getContainer()->get('doctrine')->getManager();
+        $schemaTool = new SchemaTool($entityManager);
+        
+        $metadata = $entityManager->getMetadataFactory()->getAllMetadata();
+        
+        try {
+            $schemaTool->createSchema($metadata);
+        } catch (\Exception $e) {
+            // 如果表已经存在，尝试更新schema
+            $schemaTool->updateSchema($metadata, true);
+        }
     }
 } 

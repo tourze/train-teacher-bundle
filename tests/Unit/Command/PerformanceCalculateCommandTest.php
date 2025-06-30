@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\TrainTeacherBundle\Tests\Unit\Command;
 
 use PHPUnit\Framework\MockObject\MockObject;
@@ -14,7 +16,7 @@ use Tourze\TrainTeacherBundle\Service\PerformanceService;
 use Tourze\TrainTeacherBundle\Service\TeacherService;
 
 /**
- * PerformanceCalculateCommand单元测试
+ * PerformanceCalculateCommand测试
  */
 class PerformanceCalculateCommandTest extends TestCase
 {
@@ -284,14 +286,14 @@ class PerformanceCalculateCommandTest extends TestCase
 
         $this->assertEquals(1, $exitCode);
         $output = $this->commandTester->getDisplay();
-        $this->// TODO: 检查断言的期望值是否正确
-        assertStringContainsString('部分教师绩效计算失败', $output);
+        $this-> // TODO: 检查断言的期望值是否正确
+            assertStringContainsString('部分教师绩效计算失败', $output);
     }
 
     public function test_command_configuration(): void
     {
         $definition = $this->command->getDefinition();
-        
+
         $this->assertTrue($definition->hasArgument('period'));
         $this->assertTrue($definition->hasOption('teacher-id'));
         $this->assertTrue($definition->hasOption('teacher-type'));
@@ -299,7 +301,7 @@ class PerformanceCalculateCommandTest extends TestCase
         $this->assertTrue($definition->hasOption('force'));
         $this->assertTrue($definition->hasOption('dry-run'));
         $this->assertTrue($definition->hasOption('batch-size'));
-        
+
         $this->assertEquals('teacher:performance:calculate', $this->command->getName());
         $this->assertEquals('计算教师绩效，支持批量计算和单个教师计算', $this->command->getDescription());
     }
@@ -325,7 +327,7 @@ class PerformanceCalculateCommandTest extends TestCase
         $teacher->setWorkExperience(20);
         $teacher->setTeacherStatus('在职');
         $teacher->setJoinDate(new \DateTimeImmutable('2005-03-01'));
-        
+
         return $teacher;
     }
 
@@ -339,4 +341,14 @@ class PerformanceCalculateCommandTest extends TestCase
         $performance->method('getPerformanceLevel')->willReturn('优秀');
         return $performance;
     }
-} 
+
+    public function testCommandExists(): void
+    {
+        $this->assertTrue(class_exists(PerformanceCalculateCommand::class));
+    }
+    
+    public function testCommandConstantName(): void
+    {
+        $this->assertEquals('teacher:performance:calculate', PerformanceCalculateCommand::NAME);
+    }
+}

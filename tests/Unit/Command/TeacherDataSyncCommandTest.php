@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\TrainTeacherBundle\Tests\Unit\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -244,5 +246,15 @@ class TeacherDataSyncCommandTest extends TestCase
         $teacher->setJoinDate(new \DateTimeImmutable('2005-03-01'));
 
         return $teacher;
+    }
+
+    public function testCommandExists(): void
+    {
+        $this->assertTrue(class_exists(TeacherDataSyncCommand::class));
+    }
+    
+    public function testCommandConstantName(): void
+    {
+        $this->assertEquals('teacher:data:sync', TeacherDataSyncCommand::NAME);
     }
 }

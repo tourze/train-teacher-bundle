@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tourze\TrainTeacherBundle\Tests\Unit\Entity;
 
 use PHPUnit\Framework\TestCase;
 use Tourze\TrainTeacherBundle\Entity\Teacher;
 
 /**
- * Teacher实体单元测试
+ * Teacher实体测试
  */
 class TeacherTest extends TestCase
 {
@@ -20,7 +22,7 @@ class TeacherTest extends TestCase
     public function test_constructor_sets_default_values(): void
     {
         $teacher = new Teacher();
-        
+
         $this->assertInstanceOf(\DateTimeInterface::class, $teacher->getCreateTime());
         $this->assertInstanceOf(\DateTimeInterface::class, $teacher->getUpdateTime());
     }
@@ -29,7 +31,7 @@ class TeacherTest extends TestCase
     {
         $id = 'teacher_123';
         $this->teacher->setId($id);
-        
+
         $this->assertEquals($id, $this->teacher->getId());
     }
 
@@ -37,7 +39,7 @@ class TeacherTest extends TestCase
     {
         $code = 'T20240101001';
         $this->teacher->setTeacherCode($code);
-        
+
         $this->assertEquals($code, $this->teacher->getTeacherCode());
     }
 
@@ -45,7 +47,7 @@ class TeacherTest extends TestCase
     {
         $name = '张三';
         $this->teacher->setTeacherName($name);
-        
+
         $this->assertEquals($name, $this->teacher->getTeacherName());
     }
 
@@ -53,7 +55,7 @@ class TeacherTest extends TestCase
     {
         $type = '专职';
         $this->teacher->setTeacherType($type);
-        
+
         $this->assertEquals($type, $this->teacher->getTeacherType());
     }
 
@@ -61,7 +63,7 @@ class TeacherTest extends TestCase
     {
         $gender = '男';
         $this->teacher->setGender($gender);
-        
+
         $this->assertEquals($gender, $this->teacher->getGender());
     }
 
@@ -69,7 +71,7 @@ class TeacherTest extends TestCase
     {
         $birthDate = new \DateTimeImmutable('1980-01-01');
         $this->teacher->setBirthDate($birthDate);
-        
+
         $this->assertEquals($birthDate, $this->teacher->getBirthDate());
     }
 
@@ -77,7 +79,7 @@ class TeacherTest extends TestCase
     {
         $idCard = '110101198001011234';
         $this->teacher->setIdCard($idCard);
-        
+
         $this->assertEquals($idCard, $this->teacher->getIdCard());
     }
 
@@ -85,7 +87,7 @@ class TeacherTest extends TestCase
     {
         $phone = '13800138000';
         $this->teacher->setPhone($phone);
-        
+
         $this->assertEquals($phone, $this->teacher->getPhone());
     }
 
@@ -93,14 +95,14 @@ class TeacherTest extends TestCase
     {
         $email = 'test@example.com';
         $this->teacher->setEmail($email);
-        
+
         $this->assertEquals($email, $this->teacher->getEmail());
     }
 
     public function test_email_can_be_null(): void
     {
         $this->teacher->setEmail(null);
-        
+
         $this->assertNull($this->teacher->getEmail());
     }
 
@@ -108,14 +110,14 @@ class TeacherTest extends TestCase
     {
         $address = '北京市朝阳区';
         $this->teacher->setAddress($address);
-        
+
         $this->assertEquals($address, $this->teacher->getAddress());
     }
 
     public function test_address_can_be_null(): void
     {
         $this->teacher->setAddress(null);
-        
+
         $this->assertNull($this->teacher->getAddress());
     }
 
@@ -123,7 +125,7 @@ class TeacherTest extends TestCase
     {
         $education = '本科';
         $this->teacher->setEducation($education);
-        
+
         $this->assertEquals($education, $this->teacher->getEducation());
     }
 
@@ -131,7 +133,7 @@ class TeacherTest extends TestCase
     {
         $major = '安全工程';
         $this->teacher->setMajor($major);
-        
+
         $this->assertEquals($major, $this->teacher->getMajor());
     }
 
@@ -139,7 +141,7 @@ class TeacherTest extends TestCase
     {
         $school = '北京理工大学';
         $this->teacher->setGraduateSchool($school);
-        
+
         $this->assertEquals($school, $this->teacher->getGraduateSchool());
     }
 
@@ -147,7 +149,7 @@ class TeacherTest extends TestCase
     {
         $date = new \DateTimeImmutable('2002-07-01');
         $this->teacher->setGraduateDate($date);
-        
+
         $this->assertEquals($date, $this->teacher->getGraduateDate());
     }
 
@@ -155,7 +157,7 @@ class TeacherTest extends TestCase
     {
         $experience = 20;
         $this->teacher->setWorkExperience($experience);
-        
+
         $this->assertEquals($experience, $this->teacher->getWorkExperience());
     }
 
@@ -163,14 +165,14 @@ class TeacherTest extends TestCase
     {
         $specialties = ['安全管理', '风险评估'];
         $this->teacher->setSpecialties($specialties);
-        
+
         $this->assertEquals($specialties, $this->teacher->getSpecialties());
     }
 
     public function test_specialties_default_empty_array(): void
     {
         $teacher = new Teacher();
-        
+
         $this->assertEquals([], $teacher->getSpecialties());
     }
 
@@ -178,7 +180,7 @@ class TeacherTest extends TestCase
     {
         $status = '在职';
         $this->teacher->setTeacherStatus($status);
-        
+
         $this->assertEquals($status, $this->teacher->getTeacherStatus());
     }
 
@@ -186,14 +188,14 @@ class TeacherTest extends TestCase
     {
         $photo = '/uploads/photos/teacher_123.jpg';
         $this->teacher->setProfilePhoto($photo);
-        
+
         $this->assertEquals($photo, $this->teacher->getProfilePhoto());
     }
 
     public function test_profile_photo_can_be_null(): void
     {
         $this->teacher->setProfilePhoto(null);
-        
+
         $this->assertNull($this->teacher->getProfilePhoto());
     }
 
@@ -201,7 +203,7 @@ class TeacherTest extends TestCase
     {
         $joinDate = new \DateTimeImmutable('2005-03-01');
         $this->teacher->setJoinDate($joinDate);
-        
+
         $this->assertEquals($joinDate, $this->teacher->getJoinDate());
     }
 
@@ -209,7 +211,7 @@ class TeacherTest extends TestCase
     {
         $createTime = new \DateTimeImmutable('2024-01-01 10:00:00');
         $this->teacher->setCreateTime($createTime);
-        
+
         $this->assertEquals($createTime, $this->teacher->getCreateTime());
     }
 
@@ -217,7 +219,7 @@ class TeacherTest extends TestCase
     {
         $updateTime = new \DateTimeImmutable('2024-01-02 10:00:00');
         $this->teacher->setUpdateTime($updateTime);
-        
+
         $this->assertEquals($updateTime, $this->teacher->getUpdateTime());
     }
 
@@ -230,7 +232,7 @@ class TeacherTest extends TestCase
             ->setTeacherName('测试教师')
             ->setTeacherType('专职')
             ->setGender('男');
-        
+
         $this->assertSame($this->teacher, $result);
         $this->assertEquals('test_id', $this->teacher->getId());
         $this->assertEquals('T001', $this->teacher->getTeacherCode());
@@ -287,4 +289,16 @@ class TeacherTest extends TestCase
         $this->assertEquals('/uploads/photos/teacher_001.jpg', $this->teacher->getProfilePhoto());
         $this->assertEquals($joinDate, $this->teacher->getJoinDate());
     }
-} 
+
+    public function testClassExists(): void
+    {
+        $this->assertTrue(class_exists(Teacher::class));
+    }
+
+    public function testStringable(): void
+    {
+        $teacher = new Teacher();
+        $teacher->setId('test-id');
+        $this->assertEquals('test-id', (string)$teacher);
+    }
+}
