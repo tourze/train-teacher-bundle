@@ -3,8 +3,10 @@
 namespace Tourze\TrainTeacherBundle\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Tourze\TrainTeacherBundle\Entity\Teacher;
 use Tourze\TrainTeacherBundle\Entity\TeacherEvaluation;
 use Tourze\TrainTeacherBundle\Exception\DuplicateEvaluationException;
+use Tourze\TrainTeacherBundle\Helper\EvaluationDataPopulator;
 use Tourze\TrainTeacherBundle\Repository\TeacherEvaluationRepository;
 
 /**
@@ -16,38 +18,69 @@ class EvaluationService
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly TeacherEvaluationRepository $evaluationRepository,
-        private readonly TeacherService $teacherService
+        private readonly TeacherService $teacherService,
+        private readonly EvaluationDataPopulator $dataPopulator,
     ) {
     }
 
     /**
      * 提交教师评价
+     * @param array<string, mixed> $evaluationData
      */
     public function submitEvaluation(string $teacherId, string $evaluatorId, array $evaluationData): TeacherEvaluation
     {
         $teacher = $this->teacherService->getTeacherById($teacherId);
-        
-        // 检查是否已经评价过
-        if ((bool) isset($evaluationData['evaluationType']) && 
-            $this->evaluationRepository->hasEvaluated($teacher, $evaluatorId, $evaluationData['evaluationType'])) {
-            throw new DuplicateEvaluationException('您已经对该教师进行过此类型的评价');
+        $this->validateDuplicateEvaluation($teacher, $evaluatorId, $evaluationData);
+
+        $evaluation = $this->createEvaluationEntity($teacher, $evaluatorId, $evaluationData);
+        $this->persistEvaluation($evaluation);
+
+        return $evaluation;
+    }
+
+    /**
+     * 验证重复评价
+     * @param array<string, mixed> $evaluationData
+     */
+    private function validateDuplicateEvaluation(Teacher $teacher, string $evaluatorId, array $evaluationData): void
+    {
+        if (!isset($evaluationData['evaluationType']) || !\is_string($evaluationData['evaluationType'])) {
+            return;
         }
 
+        if ($this->evaluationRepository->hasEvaluated($teacher, $evaluatorId, $evaluationData['evaluationType'])) {
+            throw new DuplicateEvaluationException('您已经对该教师进行过此类型的评价');
+        }
+    }
+
+    /**
+     * 创建评价实体
+     * @param array<string, mixed> $evaluationData
+     */
+    private function createEvaluationEntity(Teacher $teacher, string $evaluatorId, array $evaluationData): TeacherEvaluation
+    {
         $evaluation = new TeacherEvaluation();
         $evaluation->setId($this->generateEvaluationId());
         $evaluation->setTeacher($teacher);
         $evaluation->setEvaluatorId($evaluatorId);
-        
-        $this->populateEvaluationData($evaluation, $evaluationData);
-        
-        // 计算总体评分
-        $overallScore = $this->calculateOverallScore($evaluationData['evaluationScores'] ?? []);
+
+        $this->dataPopulator->populate($evaluation, $evaluationData);
+
+        /** @var array<string, mixed> $evaluationScores */
+        $evaluationScores = $evaluationData['evaluationScores'] ?? [];
+        $overallScore = $this->calculateOverallScore($evaluationScores);
         $evaluation->setOverallScore($overallScore);
 
+        return $evaluation;
+    }
+
+    /**
+     * 持久化评价
+     */
+    private function persistEvaluation(TeacherEvaluation $evaluation): void
+    {
         $this->entityManager->persist($evaluation);
         $this->entityManager->flush();
-
-        return $evaluation;
     }
 
     /**
@@ -56,64 +89,81 @@ class EvaluationService
     public function calculateAverageEvaluation(string $teacherId): float
     {
         $teacher = $this->teacherService->getTeacherById($teacherId);
+
         return $this->evaluationRepository->getAverageScore($teacher);
     }
 
     /**
      * 获取教师评价统计信息
+     * @return array<string, mixed>
      */
     public function getEvaluationStatistics(string $teacherId): array
     {
         $teacher = $this->teacherService->getTeacherById($teacherId);
         $statistics = $this->evaluationRepository->getEvaluationStatistics($teacher);
-        
+
         // 添加各类型评价的平均分
         $statistics['studentAverage'] = $this->evaluationRepository->getAverageScoreByEvaluatorType($teacher, '学员');
         $statistics['peerAverage'] = $this->evaluationRepository->getAverageScoreByEvaluatorType($teacher, '同行');
         $statistics['managerAverage'] = $this->evaluationRepository->getAverageScoreByEvaluatorType($teacher, '管理层');
         $statistics['selfAverage'] = $this->evaluationRepository->getAverageScoreByEvaluatorType($teacher, '自我');
-        
+
         return $statistics;
     }
 
     /**
      * 生成教师评价报告
+     * @return array<string, mixed>
      */
     public function generateEvaluationReport(string $teacherId): array
     {
         $teacher = $this->teacherService->getTeacherById($teacherId);
         $evaluations = $this->evaluationRepository->findByTeacher($teacher);
         $statistics = $this->getEvaluationStatistics($teacherId);
-        
-        // 分析评价趋势
-        $trend = $this->analyzeEvaluationTrend($evaluations);
-        
-        // 分析强项和弱项
-        $strengths = $this->analyzeStrengths($evaluations);
-        $weaknesses = $this->analyzeWeaknesses($evaluations);
-        
-        // 收集建议
-        $suggestions = $this->collectSuggestions($evaluations);
-        
-        return [
-            'teacher' => [
-                'id' => $teacher->getId(),
-                'name' => $teacher->getTeacherName(),
-                'code' => $teacher->getTeacherCode(),
-                'type' => $teacher->getTeacherType(),
-            ],
+
+        $analysisData = $this->generateEvaluationAnalysis($evaluations);
+        $teacherInfo = $this->buildTeacherInfo($teacher);
+
+        return array_merge([
+            'teacher' => $teacherInfo,
             'statistics' => $statistics,
-            'trend' => $trend,
-            'strengths' => $strengths,
-            'weaknesses' => $weaknesses,
-            'suggestions' => $suggestions,
             'evaluationCount' => count($evaluations),
             'reportGeneratedAt' => new \DateTime(),
+        ], $analysisData);
+    }
+
+    /**
+     * 生成评价分析数据
+     * @param array<int, TeacherEvaluation> $evaluations
+     * @return array<string, mixed>
+     */
+    private function generateEvaluationAnalysis(array $evaluations): array
+    {
+        return [
+            'trend' => $this->analyzeEvaluationTrend($evaluations),
+            'strengths' => $this->analyzeStrengths($evaluations),
+            'weaknesses' => $this->analyzeWeaknesses($evaluations),
+            'suggestions' => $this->collectSuggestions($evaluations),
+        ];
+    }
+
+    /**
+     * 构建教师信息
+     * @return array<string, mixed>
+     */
+    private function buildTeacherInfo(Teacher $teacher): array
+    {
+        return [
+            'id' => $teacher->getId(),
+            'name' => $teacher->getTeacherName(),
+            'code' => $teacher->getTeacherCode(),
+            'type' => $teacher->getTeacherType(),
         ];
     }
 
     /**
      * 获取最高评分的教师列表
+     * @return array<int, mixed>
      */
     public function getTopRatedTeachers(int $limit = 10): array
     {
@@ -122,15 +172,18 @@ class EvaluationService
 
     /**
      * 获取教师评价列表
+     * @return array<int, TeacherEvaluation>
      */
     public function getTeacherEvaluations(string $teacherId): array
     {
         $teacher = $this->teacherService->getTeacherById($teacherId);
+
         return $this->evaluationRepository->findByTeacher($teacher);
     }
 
     /**
      * 根据评价者类型获取评价列表
+     * @return array<int, TeacherEvaluation>
      */
     public function getEvaluationsByType(string $evaluatorType): array
     {
@@ -139,6 +192,7 @@ class EvaluationService
 
     /**
      * 获取指定时间范围内的评价
+     * @return array<int, TeacherEvaluation>
      */
     public function getEvaluationsByDateRange(\DateTimeInterface $startDate, \DateTimeInterface $endDate): array
     {
@@ -146,72 +200,37 @@ class EvaluationService
     }
 
     /**
-     * 填充评价数据
-     */
-    private function populateEvaluationData(TeacherEvaluation $evaluation, array $data): void
-    {
-        if ((bool) isset($data['evaluatorType'])) {
-            $evaluation->setEvaluatorType($data['evaluatorType']);
-        }
-        if ((bool) isset($data['evaluationType'])) {
-            $evaluation->setEvaluationType($data['evaluationType']);
-        }
-        if ((bool) isset($data['evaluationDate'])) {
-            $evaluation->setEvaluationDate($data['evaluationDate']);
-        } else {
-            $evaluation->setEvaluationDate(new \DateTimeImmutable());
-        }
-        if ((bool) isset($data['evaluationItems'])) {
-            $evaluation->setEvaluationItems($data['evaluationItems']);
-        }
-        if ((bool) isset($data['evaluationScores'])) {
-            $evaluation->setEvaluationScores($data['evaluationScores']);
-        }
-        if ((bool) isset($data['evaluationComments'])) {
-            $evaluation->setEvaluationComments($data['evaluationComments']);
-        }
-        if ((bool) isset($data['suggestions'])) {
-            $evaluation->setSuggestions($data['suggestions']);
-        }
-        if ((bool) isset($data['isAnonymous'])) {
-            $evaluation->setIsAnonymous($data['isAnonymous']);
-        }
-        if ((bool) isset($data['evaluationStatus'])) {
-            $evaluation->setEvaluationStatus($data['evaluationStatus']);
-        } else {
-            $evaluation->setEvaluationStatus('已提交');
-        }
-    }
-
-    /**
      * 计算总体评分
+     * @param array<string, mixed> $scores
      */
     private function calculateOverallScore(array $scores): float
     {
-        if ((bool) empty($scores)) {
+        if ([] === $scores) {
             return 0.0;
         }
 
         $total = 0;
         $count = 0;
-        
+
         foreach ($scores as $score) {
-            if ((bool) is_numeric($score)) {
+            if (is_numeric($score)) {
                 $total += (float) $score;
-                $count++;
+                ++$count;
             }
         }
-        
-        return $count > 0 ? round($total / $count, 1) : 0.0;
+
+        return 0 < $count ? round($total / $count, 1) : 0.0;
     }
 
     /**
      * 分析评价趋势
+     * @param array<int, TeacherEvaluation> $evaluations
+     * @return array<string, array<string, mixed>>
      */
     private function analyzeEvaluationTrend(array $evaluations): array
     {
         $monthlyScores = [];
-        
+
         foreach ($evaluations as $evaluation) {
             $month = $evaluation->getEvaluationDate()->format('Y-m');
             if (!isset($monthlyScores[$month])) {
@@ -219,7 +238,7 @@ class EvaluationService
             }
             $monthlyScores[$month][] = $evaluation->getOverallScore();
         }
-        
+
         $trend = [];
         foreach ($monthlyScores as $month => $scores) {
             $trend[$month] = [
@@ -227,32 +246,25 @@ class EvaluationService
                 'evaluationCount' => count($scores),
             ];
         }
-        
+
         ksort($trend);
+
         return $trend;
     }
 
     /**
      * 分析强项
+     * @param array<int, TeacherEvaluation> $evaluations
+     * @return array<int, array<string, mixed>>
      */
     private function analyzeStrengths(array $evaluations): array
     {
-        $itemScores = [];
-        
-        foreach ($evaluations as $evaluation) {
-            $scores = $evaluation->getEvaluationScores();
-            foreach ($scores as $item => $score) {
-                if (!isset($itemScores[$item])) {
-                    $itemScores[$item] = [];
-                }
-                $itemScores[$item][] = (float) $score;
-            }
-        }
-        
+        $itemScores = $this->collectItemScores($evaluations);
         $strengths = [];
+
         foreach ($itemScores as $item => $scores) {
             $average = array_sum($scores) / count($scores);
-            if ($average >= 4.0) { // 假设5分制，4分以上为强项
+            if ($average >= 4.0) {
                 $strengths[] = [
                     'item' => $item,
                     'averageScore' => round($average, 1),
@@ -260,34 +272,25 @@ class EvaluationService
                 ];
             }
         }
-        
-        // 按平均分排序
-        usort($strengths, fn($a, $b) => $b['averageScore'] <=> $a['averageScore']);
-        
-        return array_slice($strengths, 0, 5); // 返回前5个强项
+
+        usort($strengths, static fn (array $a, array $b): int => $b['averageScore'] <=> $a['averageScore']);
+
+        return array_slice($strengths, 0, 5);
     }
 
     /**
      * 分析弱项
+     * @param array<int, TeacherEvaluation> $evaluations
+     * @return array<int, array<string, mixed>>
      */
     private function analyzeWeaknesses(array $evaluations): array
     {
-        $itemScores = [];
-        
-        foreach ($evaluations as $evaluation) {
-            $scores = $evaluation->getEvaluationScores();
-            foreach ($scores as $item => $score) {
-                if (!isset($itemScores[$item])) {
-                    $itemScores[$item] = [];
-                }
-                $itemScores[$item][] = (float) $score;
-            }
-        }
-        
+        $itemScores = $this->collectItemScores($evaluations);
         $weaknesses = [];
+
         foreach ($itemScores as $item => $scores) {
             $average = array_sum($scores) / count($scores);
-            if ($average < 3.0) { // 假设5分制，3分以下为弱项
+            if ($average < 3.0) {
                 $weaknesses[] = [
                     'item' => $item,
                     'averageScore' => round($average, 1),
@@ -295,31 +298,55 @@ class EvaluationService
                 ];
             }
         }
-        
-        // 按平均分排序（从低到高）
-        usort($weaknesses, fn($a, $b) => $a['averageScore'] <=> $b['averageScore']);
-        
-        return array_slice($weaknesses, 0, 5); // 返回前5个弱项
+
+        usort($weaknesses, static fn (array $a, array $b): int => $a['averageScore'] <=> $b['averageScore']);
+
+        return array_slice($weaknesses, 0, 5);
     }
 
     /**
      * 收集建议
+     * @param array<int, TeacherEvaluation> $evaluations
+     * @return array<int, string>
      */
     private function collectSuggestions(array $evaluations): array
     {
         $allSuggestions = [];
-        
+
         foreach ($evaluations as $evaluation) {
             $suggestions = $evaluation->getSuggestions();
             foreach ($suggestions as $suggestion) {
-                if (!empty($suggestion)) {
+                if ('' !== $suggestion) {
                     $allSuggestions[] = $suggestion;
                 }
             }
         }
-        
+
         // 去重并返回
         return array_unique($allSuggestions);
+    }
+
+    /**
+     * 收集评价项目得分
+     * @param array<int, TeacherEvaluation> $evaluations
+     * @return array<string, array<int, float>>
+     */
+    private function collectItemScores(array $evaluations): array
+    {
+        $itemScores = [];
+
+        foreach ($evaluations as $evaluation) {
+            $scores = $evaluation->getEvaluationScores();
+            foreach ($scores as $item => $score) {
+                $itemKey = (string) $item;
+                if (!isset($itemScores[$itemKey])) {
+                    $itemScores[$itemKey] = [];
+                }
+                $itemScores[$itemKey][] = (float) $score;
+            }
+        }
+
+        return $itemScores;
     }
 
     /**
@@ -329,4 +356,4 @@ class EvaluationService
     {
         return uniqid('eval_', true);
     }
-} 
+}

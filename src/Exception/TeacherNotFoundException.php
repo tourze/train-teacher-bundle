@@ -7,4 +7,4 @@ namespace Tourze\TrainTeacherBundle\Exception;
  */
 class TeacherNotFoundException extends \Exception
 {
-} 
+}

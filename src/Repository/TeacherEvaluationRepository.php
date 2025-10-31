@@ -4,12 +4,15 @@ namespace Tourze\TrainTeacherBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Tourze\PHPUnitSymfonyKernelTest\Attribute\AsRepository;
 use Tourze\TrainTeacherBundle\Entity\Teacher;
 use Tourze\TrainTeacherBundle\Entity\TeacherEvaluation;
 
 /**
  * 教师评价数据访问仓库
+ * @extends ServiceEntityRepository<TeacherEvaluation>
  */
+#[AsRepository(entityClass: TeacherEvaluation::class)]
 class TeacherEvaluationRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -19,6 +22,7 @@ class TeacherEvaluationRepository extends ServiceEntityRepository
 
     /**
      * 根据教师ID获取评价列表
+     * @return array<int, TeacherEvaluation>
      */
     public function findByTeacher(Teacher $teacher): array
     {
@@ -27,6 +31,7 @@ class TeacherEvaluationRepository extends ServiceEntityRepository
 
     /**
      * 根据评价者类型获取评价列表
+     * @return array<int, TeacherEvaluation>
      */
     public function findByEvaluatorType(string $evaluatorType): array
     {
@@ -43,9 +48,10 @@ class TeacherEvaluationRepository extends ServiceEntityRepository
             ->where('e.teacher = :teacher')
             ->setParameter('teacher', $teacher)
             ->getQuery()
-            ->getSingleScalarResult();
+            ->getSingleScalarResult()
+        ;
 
-        return $result ? (float) $result : 0.0;
+        return null !== $result ? (float) $result : 0.0;
     }
 
     /**
@@ -60,13 +66,15 @@ class TeacherEvaluationRepository extends ServiceEntityRepository
             ->setParameter('teacher', $teacher)
             ->setParameter('evaluatorType', $evaluatorType)
             ->getQuery()
-            ->getSingleScalarResult();
+            ->getSingleScalarResult()
+        ;
 
-        return $result ? (float) $result : 0.0;
+        return null !== $result ? (float) $result : 0.0;
     }
 
     /**
      * 获取教师评价统计信息
+     * @return array<string, mixed>
      */
     public function getEvaluationStatistics(Teacher $teacher): array
     {
@@ -75,7 +83,8 @@ class TeacherEvaluationRepository extends ServiceEntityRepository
             ->where('e.teacher = :teacher')
             ->setParameter('teacher', $teacher)
             ->getQuery()
-            ->getSingleScalarResult();
+            ->getSingleScalarResult()
+        ;
 
         $studentEvaluations = $this->createQueryBuilder('e')
             ->select('COUNT(e.id)')
@@ -84,7 +93,8 @@ class TeacherEvaluationRepository extends ServiceEntityRepository
             ->setParameter('teacher', $teacher)
             ->setParameter('student', '学员')
             ->getQuery()
-            ->getSingleScalarResult();
+            ->getSingleScalarResult()
+        ;
 
         $peerEvaluations = $this->createQueryBuilder('e')
             ->select('COUNT(e.id)')
@@ -93,7 +103,8 @@ class TeacherEvaluationRepository extends ServiceEntityRepository
             ->setParameter('teacher', $teacher)
             ->setParameter('peer', '同行')
             ->getQuery()
-            ->getSingleScalarResult();
+            ->getSingleScalarResult()
+        ;
 
         $managerEvaluations = $this->createQueryBuilder('e')
             ->select('COUNT(e.id)')
@@ -102,7 +113,8 @@ class TeacherEvaluationRepository extends ServiceEntityRepository
             ->setParameter('teacher', $teacher)
             ->setParameter('manager', '管理层')
             ->getQuery()
-            ->getSingleScalarResult();
+            ->getSingleScalarResult()
+        ;
 
         return [
             'total' => $total,
@@ -115,17 +127,22 @@ class TeacherEvaluationRepository extends ServiceEntityRepository
 
     /**
      * 获取最高评分的教师列表
+     * @return array<int, array<string, mixed>>
      */
     public function getTopRatedTeachers(int $limit = 10): array
     {
-        return $this->createQueryBuilder('e')
-            ->select('t.id, t.teacherName, AVG(e.overallScore) as avgScore')
+        /** @var list<array<string, mixed>> $result */
+        $result = $this->createQueryBuilder('e')
+            ->select('t.id, t.teacherName, t.teacherCode, AVG(e.overallScore) as avgScore')
             ->join('e.teacher', 't')
-            ->groupBy('t.id')
+            ->groupBy('t.id, t.teacherName, t.teacherCode')
             ->orderBy('avgScore', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()
-            ->getResult();
+            ->getResult()
+        ;
+
+        return $result;
     }
 
     /**
@@ -142,35 +159,43 @@ class TeacherEvaluationRepository extends ServiceEntityRepository
             ->setParameter('evaluatorId', $evaluatorId)
             ->setParameter('evaluationType', $evaluationType)
             ->getQuery()
-            ->getSingleScalarResult();
+            ->getSingleScalarResult()
+        ;
 
         return $count > 0;
     }
 
     /**
      * 获取指定时间范围内的评价
+     * @return array<int, TeacherEvaluation>
      */
     public function findByDateRange(\DateTimeInterface $startDate, \DateTimeInterface $endDate): array
     {
-        return $this->createQueryBuilder('e')
+        /** @var list<TeacherEvaluation> $result */
+        $result = $this->createQueryBuilder('e')
             ->where('e.evaluationDate >= :startDate')
             ->andWhere('e.evaluationDate <= :endDate')
             ->setParameter('startDate', $startDate)
             ->setParameter('endDate', $endDate)
             ->orderBy('e.evaluationDate', 'DESC')
             ->getQuery()
-            ->getResult();
+            ->getResult()
+        ;
+
+        return $result;
     }
 
     /**
      * 获取教师最近的评价记录
+     * @return array<int, TeacherEvaluation>
      */
     public function findRecentEvaluations(Teacher $teacher, string $evaluationType, int $days): array
     {
         $startDate = new \DateTime();
         $startDate->modify("-{$days} days");
 
-        return $this->createQueryBuilder('e')
+        /** @var list<TeacherEvaluation> $result */
+        $result = $this->createQueryBuilder('e')
             ->where('e.teacher = :teacher')
             ->andWhere('e.evaluationType = :evaluationType')
             ->andWhere('e.evaluationDate >= :startDate')
@@ -179,6 +204,27 @@ class TeacherEvaluationRepository extends ServiceEntityRepository
             ->setParameter('startDate', $startDate)
             ->orderBy('e.evaluationDate', 'DESC')
             ->getQuery()
-            ->getResult();
+            ->getResult()
+        ;
+
+        return $result;
+    }
+
+    public function save(TeacherEvaluation $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(TeacherEvaluation $entity, bool $flush = true): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
     }
 }

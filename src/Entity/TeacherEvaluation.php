@@ -4,22 +4,23 @@ namespace Tourze\TrainTeacherBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Stringable;
+use Symfony\Component\Validator\Constraints as Assert;
+use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
+use Tourze\TrainTeacherBundle\Repository\TeacherEvaluationRepository;
 
 /**
  * 教师评价实体
  * 管理学员、同行、管理层对教师的评价信息
  */
-#[ORM\Entity(repositoryClass: \Tourze\TrainTeacherBundle\Repository\TeacherEvaluationRepository::class)]
+#[ORM\Entity(repositoryClass: TeacherEvaluationRepository::class)]
 #[ORM\Table(name: 'train_teacher_evaluation', options: ['comment' => '教师评价表'])]
-#[ORM\Index(columns: ['teacher_id'], name: 'idx_evaluation_teacher_id')]
-#[ORM\Index(columns: ['evaluator_type'], name: 'idx_evaluator_type')]
-#[ORM\Index(columns: ['evaluation_date'], name: 'idx_evaluation_date')]
-#[ORM\Index(columns: ['evaluation_status'], name: 'idx_evaluation_status')]
-class TeacherEvaluation implements Stringable
+#[ORM\Index(columns: ['teacher_id', 'evaluation_date'], name: 'train_teacher_evaluation_IDX_teacher_evaluation_date')]
+class TeacherEvaluation implements \Stringable
 {
     #[ORM\Id]
+    #[ORM\CustomIdGenerator]
     #[ORM\Column(type: Types::STRING, length: 36, options: ['comment' => '评价ID'])]
+    #[Assert\Length(max: 36)]
     private string $id;
 
     /**
@@ -27,39 +28,68 @@ class TeacherEvaluation implements Stringable
      */
     #[ORM\ManyToOne(targetEntity: Teacher::class)]
     #[ORM\JoinColumn(name: 'teacher_id', referencedColumnName: 'id', nullable: false)]
+    #[Assert\NotNull]
     private Teacher $teacher;
 
     #[ORM\Column(name: 'evaluator_type', type: Types::STRING, length: 20, options: ['comment' => '评价者类型（学员、同行、管理层、自我）'])]
+    #[IndexColumn]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 20)]
     private string $evaluatorType;
 
     #[ORM\Column(name: 'evaluator_id', type: Types::STRING, length: 36, options: ['comment' => '评价者ID'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 36)]
     private string $evaluatorId;
 
     #[ORM\Column(name: 'evaluation_type', type: Types::STRING, length: 50, options: ['comment' => '评价类型'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 50)]
     private string $evaluationType;
 
     #[ORM\Column(name: 'evaluation_date', type: Types::DATE_IMMUTABLE, options: ['comment' => '评价日期'])]
+    #[IndexColumn]
+    #[Assert\NotNull]
     private \DateTimeInterface $evaluationDate;
 
+    /**
+     * @var array<string, string>
+     */
     #[ORM\Column(name: 'evaluation_items', type: Types::JSON, options: ['comment' => '评价项目'])]
+    #[Assert\Type(type: 'array')]
     private array $evaluationItems = [];
 
+    /**
+     * @var array<string, float>
+     */
     #[ORM\Column(name: 'evaluation_scores', type: Types::JSON, options: ['comment' => '评价分数'])]
+    #[Assert\Type(type: 'array')]
     private array $evaluationScores = [];
 
     #[ORM\Column(name: 'overall_score', type: Types::DECIMAL, precision: 3, scale: 1, options: ['comment' => '总体评分'])]
+    #[Assert\NotNull]
+    #[Assert\Range(min: 0, max: 10)]
     private float $overallScore;
 
     #[ORM\Column(name: 'evaluation_comments', type: Types::TEXT, nullable: true, options: ['comment' => '评价意见'])]
+    #[Assert\Length(max: 2000)]
     private ?string $evaluationComments = null;
 
+    /**
+     * @var array<string>
+     */
     #[ORM\Column(type: Types::JSON, options: ['comment' => '建议'])]
+    #[Assert\Type(type: 'array')]
     private array $suggestions = [];
 
     #[ORM\Column(name: 'is_anonymous', type: Types::BOOLEAN, options: ['comment' => '是否匿名'])]
+    #[Assert\Type(type: 'bool')]
     private bool $isAnonymous = false;
 
     #[ORM\Column(name: 'evaluation_status', type: Types::STRING, length: 20, options: ['comment' => '评价状态'])]
+    #[IndexColumn]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 20)]
     private string $evaluationStatus;
 
     #[ORM\Column(name: 'create_time', type: Types::DATETIME_IMMUTABLE, options: ['comment' => '创建时间'])]
@@ -75,10 +105,9 @@ class TeacherEvaluation implements Stringable
         return $this->id;
     }
 
-    public function setId(string $id): self
+    public function setId(string $id): void
     {
         $this->id = $id;
-        return $this;
     }
 
     public function getTeacher(): Teacher
@@ -86,10 +115,9 @@ class TeacherEvaluation implements Stringable
         return $this->teacher;
     }
 
-    public function setTeacher(Teacher $teacher): self
+    public function setTeacher(Teacher $teacher): void
     {
         $this->teacher = $teacher;
-        return $this;
     }
 
     public function getEvaluatorType(): string
@@ -97,10 +125,9 @@ class TeacherEvaluation implements Stringable
         return $this->evaluatorType;
     }
 
-    public function setEvaluatorType(string $evaluatorType): self
+    public function setEvaluatorType(string $evaluatorType): void
     {
         $this->evaluatorType = $evaluatorType;
-        return $this;
     }
 
     public function getEvaluatorId(): string
@@ -108,10 +135,9 @@ class TeacherEvaluation implements Stringable
         return $this->evaluatorId;
     }
 
-    public function setEvaluatorId(string $evaluatorId): self
+    public function setEvaluatorId(string $evaluatorId): void
     {
         $this->evaluatorId = $evaluatorId;
-        return $this;
     }
 
     public function getEvaluationType(): string
@@ -119,10 +145,9 @@ class TeacherEvaluation implements Stringable
         return $this->evaluationType;
     }
 
-    public function setEvaluationType(string $evaluationType): self
+    public function setEvaluationType(string $evaluationType): void
     {
         $this->evaluationType = $evaluationType;
-        return $this;
     }
 
     public function getEvaluationDate(): \DateTimeInterface
@@ -130,32 +155,41 @@ class TeacherEvaluation implements Stringable
         return $this->evaluationDate;
     }
 
-    public function setEvaluationDate(\DateTimeInterface $evaluationDate): self
+    public function setEvaluationDate(\DateTimeInterface $evaluationDate): void
     {
         $this->evaluationDate = $evaluationDate;
-        return $this;
     }
 
+    /**
+     * @return array<string, string>
+     */
     public function getEvaluationItems(): array
     {
         return $this->evaluationItems;
     }
 
-    public function setEvaluationItems(array $evaluationItems): self
+    /**
+     * @param array<string, string> $evaluationItems
+     */
+    public function setEvaluationItems(array $evaluationItems): void
     {
         $this->evaluationItems = $evaluationItems;
-        return $this;
     }
 
+    /**
+     * @return array<string, float>
+     */
     public function getEvaluationScores(): array
     {
         return $this->evaluationScores;
     }
 
-    public function setEvaluationScores(array $evaluationScores): self
+    /**
+     * @param array<string, float> $evaluationScores
+     */
+    public function setEvaluationScores(array $evaluationScores): void
     {
         $this->evaluationScores = $evaluationScores;
-        return $this;
     }
 
     public function getOverallScore(): float
@@ -163,10 +197,9 @@ class TeacherEvaluation implements Stringable
         return $this->overallScore;
     }
 
-    public function setOverallScore(float $overallScore): self
+    public function setOverallScore(float $overallScore): void
     {
         $this->overallScore = $overallScore;
-        return $this;
     }
 
     public function getEvaluationComments(): ?string
@@ -174,21 +207,25 @@ class TeacherEvaluation implements Stringable
         return $this->evaluationComments;
     }
 
-    public function setEvaluationComments(?string $evaluationComments): self
+    public function setEvaluationComments(?string $evaluationComments): void
     {
         $this->evaluationComments = $evaluationComments;
-        return $this;
     }
 
+    /**
+     * @return array<string>
+     */
     public function getSuggestions(): array
     {
         return $this->suggestions;
     }
 
-    public function setSuggestions(array $suggestions): self
+    /**
+     * @param array<string> $suggestions
+     */
+    public function setSuggestions(array $suggestions): void
     {
         $this->suggestions = $suggestions;
-        return $this;
     }
 
     public function isAnonymous(): bool
@@ -196,10 +233,14 @@ class TeacherEvaluation implements Stringable
         return $this->isAnonymous;
     }
 
-    public function setIsAnonymous(bool $isAnonymous): self
+    public function getIsAnonymous(): bool
+    {
+        return $this->isAnonymous;
+    }
+
+    public function setIsAnonymous(bool $isAnonymous): void
     {
         $this->isAnonymous = $isAnonymous;
-        return $this;
     }
 
     public function getEvaluationStatus(): string
@@ -207,10 +248,9 @@ class TeacherEvaluation implements Stringable
         return $this->evaluationStatus;
     }
 
-    public function setEvaluationStatus(string $evaluationStatus): self
+    public function setEvaluationStatus(string $evaluationStatus): void
     {
         $this->evaluationStatus = $evaluationStatus;
-        return $this;
     }
 
     public function getCreateTime(): \DateTimeInterface
@@ -218,14 +258,13 @@ class TeacherEvaluation implements Stringable
         return $this->createTime;
     }
 
-    public function setCreateTime(\DateTimeInterface $createTime): self
+    public function setCreateTime(\DateTimeInterface $createTime): void
     {
         $this->createTime = $createTime;
-        return $this;
     }
 
     public function __toString(): string
     {
-        return (string) $this->id;
+        return $this->id;
     }
-} 
+}

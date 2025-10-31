@@ -4,90 +4,132 @@ namespace Tourze\TrainTeacherBundle\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Stringable;
+use Symfony\Component\Validator\Constraints as Assert;
+use Tourze\DoctrineIndexedBundle\Attribute\IndexColumn;
+use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
+use Tourze\TrainTeacherBundle\Repository\TeacherRepository;
 
 /**
  * 教师实体
  * 管理教师的基本信息、联系方式、身份信息等
  */
-#[ORM\Entity(repositoryClass: \Tourze\TrainTeacherBundle\Repository\TeacherRepository::class)]
+#[ORM\Entity(repositoryClass: TeacherRepository::class)]
 #[ORM\Table(name: 'train_teacher', options: ['comment' => '教师信息表'])]
-#[ORM\Index(columns: ['teacher_code'], name: 'idx_teacher_code')]
-#[ORM\Index(columns: ['teacher_type'], name: 'idx_teacher_type')]
-#[ORM\Index(columns: ['teacher_status'], name: 'idx_teacher_status')]
-class Teacher implements Stringable
+class Teacher implements \Stringable
 {
+    use TimestampableAware;
+
     #[ORM\Id]
+    #[ORM\CustomIdGenerator]
     #[ORM\Column(type: Types::STRING, length: 36, options: ['comment' => '教师ID'])]
+    #[Assert\Length(max: 36)]
     private string $id;
 
     #[ORM\Column(name: 'teacher_code', type: Types::STRING, length: 32, unique: true, options: ['comment' => '教师编号'])]
+    #[IndexColumn]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 32)]
     private string $teacherCode;
 
     #[ORM\Column(name: 'teacher_name', type: Types::STRING, length: 50, options: ['comment' => '教师姓名'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 50)]
     private string $teacherName;
 
     #[ORM\Column(name: 'teacher_type', type: Types::STRING, length: 20, options: ['comment' => '教师类型（专职、兼职）'])]
+    #[IndexColumn]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 20)]
     private string $teacherType;
 
     #[ORM\Column(type: Types::STRING, length: 10, options: ['comment' => '性别'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 10)]
     private string $gender;
 
     #[ORM\Column(name: 'birth_date', type: Types::DATE_IMMUTABLE, options: ['comment' => '出生日期'])]
+    #[Assert\NotNull]
     private \DateTimeInterface $birthDate;
 
     #[ORM\Column(name: 'id_card', type: Types::STRING, length: 18, options: ['comment' => '身份证号'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 18)]
     private string $idCard;
 
     #[ORM\Column(type: Types::STRING, length: 20, options: ['comment' => '联系电话'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 20)]
+    #[Assert\Regex(
+        pattern: '/^(?:\+86\s?)?1[3-9]\d{9}$/',
+        message: '请输入正确的手机号码格式，如：13812345678 或 +86 13812345678'
+    )]
     private string $phone;
 
     #[ORM\Column(type: Types::STRING, length: 100, nullable: true, options: ['comment' => '邮箱'])]
+    #[Assert\Email]
+    #[Assert\Length(max: 100)]
     private ?string $email = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true, options: ['comment' => '地址'])]
+    #[Assert\Length(max: 500)]
     private ?string $address = null;
 
     #[ORM\Column(type: Types::STRING, length: 20, options: ['comment' => '学历'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 20)]
     private string $education;
 
     #[ORM\Column(type: Types::STRING, length: 100, options: ['comment' => '专业'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 100)]
     private string $major;
 
     #[ORM\Column(name: 'graduate_school', type: Types::STRING, length: 100, options: ['comment' => '毕业院校'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 100)]
     private string $graduateSchool;
 
     #[ORM\Column(name: 'graduate_date', type: Types::DATE_IMMUTABLE, options: ['comment' => '毕业日期'])]
+    #[Assert\NotNull]
     private \DateTimeInterface $graduateDate;
 
     #[ORM\Column(name: 'work_experience', type: Types::INTEGER, options: ['comment' => '工作经验（年）'])]
+    #[Assert\NotNull]
+    #[Assert\GreaterThanOrEqual(value: 0)]
     private int $workExperience;
 
+    /**
+     * @var array<string>
+     */
     #[ORM\Column(type: Types::JSON, options: ['comment' => '专业特长'])]
+    #[Assert\Type(type: 'array')]
     private array $specialties = [];
 
     #[ORM\Column(name: 'teacher_status', type: Types::STRING, length: 20, options: ['comment' => '教师状态'])]
+    #[IndexColumn]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 20)]
     private string $teacherStatus;
 
     #[ORM\Column(name: 'profile_photo', type: Types::STRING, length: 255, nullable: true, options: ['comment' => '头像'])]
+    #[Assert\Length(max: 255)]
+    #[Assert\Url]
     private ?string $profilePhoto = null;
 
     #[ORM\Column(name: 'join_date', type: Types::DATE_IMMUTABLE, options: ['comment' => '入职日期'])]
+    #[Assert\NotNull]
     private \DateTimeInterface $joinDate;
 
-    #[ORM\Column(name: 'create_time', type: Types::DATETIME_IMMUTABLE, options: ['comment' => '创建时间'])]
-    private \DateTimeInterface $createTime;
-
-    #[ORM\Column(name: 'update_time', type: Types::DATETIME_IMMUTABLE, options: ['comment' => '更新时间'])]
-    private \DateTimeInterface $updateTime;
-
     #[ORM\Column(name: 'last_active_time', type: Types::DATETIME_IMMUTABLE, nullable: true, options: ['comment' => '最后活跃时间'])]
+    #[Assert\Type(type: '\DateTimeInterface')]
     private ?\DateTimeInterface $lastActiveTime = null;
+
+    #[ORM\Column(name: 'is_anonymous', type: Types::BOOLEAN, options: ['comment' => '是否匿名', 'default' => false])]
+    #[Assert\Type(type: 'bool')]
+    private bool $isAnonymous = false;
 
     public function __construct()
     {
-        $this->createTime = new \DateTimeImmutable();
-        $this->updateTime = new \DateTimeImmutable();
     }
 
     public function getId(): string
@@ -95,10 +137,9 @@ class Teacher implements Stringable
         return $this->id;
     }
 
-    public function setId(string $id): self
+    public function setId(string $id): void
     {
         $this->id = $id;
-        return $this;
     }
 
     public function getTeacherCode(): string
@@ -106,10 +147,9 @@ class Teacher implements Stringable
         return $this->teacherCode;
     }
 
-    public function setTeacherCode(string $teacherCode): self
+    public function setTeacherCode(string $teacherCode): void
     {
         $this->teacherCode = $teacherCode;
-        return $this;
     }
 
     public function getTeacherName(): string
@@ -117,10 +157,9 @@ class Teacher implements Stringable
         return $this->teacherName;
     }
 
-    public function setTeacherName(string $teacherName): self
+    public function setTeacherName(string $teacherName): void
     {
         $this->teacherName = $teacherName;
-        return $this;
     }
 
     public function getTeacherType(): string
@@ -128,10 +167,9 @@ class Teacher implements Stringable
         return $this->teacherType;
     }
 
-    public function setTeacherType(string $teacherType): self
+    public function setTeacherType(string $teacherType): void
     {
         $this->teacherType = $teacherType;
-        return $this;
     }
 
     public function getGender(): string
@@ -139,10 +177,9 @@ class Teacher implements Stringable
         return $this->gender;
     }
 
-    public function setGender(string $gender): self
+    public function setGender(string $gender): void
     {
         $this->gender = $gender;
-        return $this;
     }
 
     public function getBirthDate(): \DateTimeInterface
@@ -150,10 +187,9 @@ class Teacher implements Stringable
         return $this->birthDate;
     }
 
-    public function setBirthDate(\DateTimeInterface $birthDate): self
+    public function setBirthDate(\DateTimeInterface $birthDate): void
     {
         $this->birthDate = $birthDate;
-        return $this;
     }
 
     public function getIdCard(): string
@@ -161,10 +197,9 @@ class Teacher implements Stringable
         return $this->idCard;
     }
 
-    public function setIdCard(string $idCard): self
+    public function setIdCard(string $idCard): void
     {
         $this->idCard = $idCard;
-        return $this;
     }
 
     public function getPhone(): string
@@ -172,10 +207,9 @@ class Teacher implements Stringable
         return $this->phone;
     }
 
-    public function setPhone(string $phone): self
+    public function setPhone(string $phone): void
     {
         $this->phone = $phone;
-        return $this;
     }
 
     public function getEmail(): ?string
@@ -183,10 +217,9 @@ class Teacher implements Stringable
         return $this->email;
     }
 
-    public function setEmail(?string $email): self
+    public function setEmail(?string $email): void
     {
         $this->email = $email;
-        return $this;
     }
 
     public function getAddress(): ?string
@@ -194,10 +227,9 @@ class Teacher implements Stringable
         return $this->address;
     }
 
-    public function setAddress(?string $address): self
+    public function setAddress(?string $address): void
     {
         $this->address = $address;
-        return $this;
     }
 
     public function getEducation(): string
@@ -205,10 +237,9 @@ class Teacher implements Stringable
         return $this->education;
     }
 
-    public function setEducation(string $education): self
+    public function setEducation(string $education): void
     {
         $this->education = $education;
-        return $this;
     }
 
     public function getMajor(): string
@@ -216,10 +247,9 @@ class Teacher implements Stringable
         return $this->major;
     }
 
-    public function setMajor(string $major): self
+    public function setMajor(string $major): void
     {
         $this->major = $major;
-        return $this;
     }
 
     public function getGraduateSchool(): string
@@ -227,10 +257,9 @@ class Teacher implements Stringable
         return $this->graduateSchool;
     }
 
-    public function setGraduateSchool(string $graduateSchool): self
+    public function setGraduateSchool(string $graduateSchool): void
     {
         $this->graduateSchool = $graduateSchool;
-        return $this;
     }
 
     public function getGraduateDate(): \DateTimeInterface
@@ -238,10 +267,9 @@ class Teacher implements Stringable
         return $this->graduateDate;
     }
 
-    public function setGraduateDate(\DateTimeInterface $graduateDate): self
+    public function setGraduateDate(\DateTimeInterface $graduateDate): void
     {
         $this->graduateDate = $graduateDate;
-        return $this;
     }
 
     public function getWorkExperience(): int
@@ -249,21 +277,25 @@ class Teacher implements Stringable
         return $this->workExperience;
     }
 
-    public function setWorkExperience(int $workExperience): self
+    public function setWorkExperience(int $workExperience): void
     {
         $this->workExperience = $workExperience;
-        return $this;
     }
 
+    /**
+     * @return array<string>
+     */
     public function getSpecialties(): array
     {
         return $this->specialties;
     }
 
-    public function setSpecialties(array $specialties): self
+    /**
+     * @param array<string> $specialties
+     */
+    public function setSpecialties(array $specialties): void
     {
         $this->specialties = $specialties;
-        return $this;
     }
 
     public function getTeacherStatus(): string
@@ -271,10 +303,9 @@ class Teacher implements Stringable
         return $this->teacherStatus;
     }
 
-    public function setTeacherStatus(string $teacherStatus): self
+    public function setTeacherStatus(string $teacherStatus): void
     {
         $this->teacherStatus = $teacherStatus;
-        return $this;
     }
 
     public function getProfilePhoto(): ?string
@@ -282,10 +313,9 @@ class Teacher implements Stringable
         return $this->profilePhoto;
     }
 
-    public function setProfilePhoto(?string $profilePhoto): self
+    public function setProfilePhoto(?string $profilePhoto): void
     {
         $this->profilePhoto = $profilePhoto;
-        return $this;
     }
 
     public function getJoinDate(): \DateTimeInterface
@@ -293,32 +323,9 @@ class Teacher implements Stringable
         return $this->joinDate;
     }
 
-    public function setJoinDate(\DateTimeInterface $joinDate): self
+    public function setJoinDate(\DateTimeInterface $joinDate): void
     {
         $this->joinDate = $joinDate;
-        return $this;
-    }
-
-    public function getCreateTime(): \DateTimeInterface
-    {
-        return $this->createTime;
-    }
-
-    public function setCreateTime(\DateTimeInterface $createTime): self
-    {
-        $this->createTime = $createTime;
-        return $this;
-    }
-
-    public function getUpdateTime(): \DateTimeInterface
-    {
-        return $this->updateTime;
-    }
-
-    public function setUpdateTime(\DateTimeInterface $updateTime): self
-    {
-        $this->updateTime = $updateTime;
-        return $this;
     }
 
     public function getLastActiveTime(): ?\DateTimeInterface
@@ -326,15 +333,28 @@ class Teacher implements Stringable
         return $this->lastActiveTime;
     }
 
-    public function setLastActiveTime(?\DateTimeInterface $lastActiveTime): self
+    public function setLastActiveTime(?\DateTimeInterface $lastActiveTime): void
     {
         $this->lastActiveTime = $lastActiveTime;
-        return $this;
     }
 
+    public function isAnonymous(): bool
+    {
+        return $this->isAnonymous;
+    }
+
+    public function getIsAnonymous(): bool
+    {
+        return $this->isAnonymous;
+    }
+
+    public function setIsAnonymous(bool $isAnonymous): void
+    {
+        $this->isAnonymous = $isAnonymous;
+    }
 
     public function __toString(): string
     {
-        return (string) $this->id;
+        return $this->id;
     }
-} 
+}

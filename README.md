@@ -1,35 +1,76 @@
 # TrainTeacherBundle
 
-安全生产培训教师管理包，为安全生产培训系统提供教师队伍的全生命周期管理功能。
+[English](README.md) | [中文](README.zh-CN.md)
 
-## 功能特性
+[![Latest Version](https://img.shields.io/packagist/v/tourze/train-teacher-bundle.svg?style=flat-square)]
+(https://packagist.org/packages/tourze/train-teacher-bundle)
+[![PHP Version Require](https://img.shields.io/packagist/php-v/tourze/train-teacher-bundle?style=flat-square)]
+(https://packagist.org/packages/tourze/train-teacher-bundle)
+[![License](https://img.shields.io/packagist/l/tourze/train-teacher-bundle?style=flat-square)]
+(https://packagist.org/packages/tourze/train-teacher-bundle)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/tourze/php-monorepo/ci.yml?branch=master&style=flat-square)]
+(https://github.com/tourze/php-monorepo/actions)
+[![Code Coverage](https://img.shields.io/codecov/c/github/tourze/php-monorepo?style=flat-square)]
+(https://codecov.io/gh/tourze/php-monorepo)
 
-### 核心功能
-- **教师信息管理**: 教师基本信息、联系方式、身份证信息、照片、简历、档案管理
-- **教师分类管理**: 专职/兼职教师分类管理
-- **多维度评价体系**: 学员评价、同行评价、管理层评价、自我评价
-- **绩效评估系统**: 教师绩效评估与排名统计
-- **统计分析**: 评价结果统计分析与反馈机制
-- **状态管理**: 教师状态管理与数据同步
+A Symfony bundle for comprehensive teacher management in safety production 
+training systems, providing full lifecycle management capabilities for 
+instructor teams.
 
-### 技术特性
-- 基于 Symfony Framework 开发
-- 使用 Doctrine ORM 进行数据管理
-- 支持 PHP 8.1+
-- 遵循 PSR 标准
-- 完整的单元测试覆盖
+## Table of Contents
 
-## 安装
+- [Features](#features)
+  - [Core Features](#core-features)
+  - [Technical Features](#technical-features)
+- [Dependencies](#dependencies)
+- [Installation](#installation)
+  - [Using Composer](#using-composer)
+  - [Register the Bundle](#register-the-bundle)
+  - [Database Migration](#database-migration)
+- [Configuration](#configuration)
+- [Usage](#usage)
+  - [Teacher Management](#teacher-management)
+  - [Teacher Evaluation](#teacher-evaluation)
+  - [Performance Management](#performance-management)
+- [Advanced Usage](#advanced-usage)
+- [Data Models](#data-models)
+- [Console Commands](#console-commands)
+- [API Documentation](#api-documentation)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [License](#license)
+- [Changelog](#changelog)
 
-### 使用 Composer 安装
+## Features
+
+### Core Features
+- **Teacher Information Management**: Basic information, contact details, 
+  ID information, photos, resumes, and record management
+- **Teacher Category Management**: Full-time/part-time teacher classification management
+- **Multi-dimensional Evaluation System**: Student evaluations, peer evaluations, 
+  management evaluations, self-evaluations
+- **Performance Assessment System**: Teacher performance evaluation and ranking statistics
+- **Statistical Analysis**: Evaluation result statistical analysis and feedback mechanisms
+- **Status Management**: Teacher status management and data synchronization
+
+### Technical Features
+- Built on Symfony Framework
+- Uses Doctrine ORM for data management
+- Supports PHP 8.1+
+- Follows PSR standards
+- Complete unit test coverage
+
+## Installation
+
+### Using Composer
 
 ```bash
 composer require tourze/train-teacher-bundle
 ```
 
-### 注册 Bundle
+### Register the Bundle
 
-在 `config/bundles.php` 中添加：
+Add to `config/bundles.php`:
 
 ```php
 return [
@@ -38,83 +79,116 @@ return [
 ];
 ```
 
-### 数据库迁移
+### Database Migration
 
 ```bash
 php bin/console doctrine:migrations:diff
 php bin/console doctrine:migrations:migrate
 ```
 
-## 配置
+## Dependencies
 
-Bundle 使用默认配置即可正常工作，无需额外配置。
+This bundle requires the following packages:
 
-## 使用方法
+### PHP Requirements
+- PHP 8.1 or higher
+- ext-filter
+- ext-json
 
-### 教师管理
+### Symfony Requirements
+- symfony/config ^7.3
+- symfony/console ^7.3
+- symfony/dependency-injection ^7.3
+- symfony/doctrine-bridge ^7.3
+- symfony/framework-bundle ^7.3
+- symfony/http-kernel ^7.3
+- symfony/routing ^7.3
+- symfony/yaml ^7.3
+
+### Doctrine Requirements
+- doctrine/collections ^2.3
+- doctrine/dbal ^4.0
+- doctrine/doctrine-bundle ^2.13
+- doctrine/orm ^3.0
+- doctrine/persistence ^4.1
+
+### Tourze Requirements
+- tourze/bundle-dependency 0.0.*
+
+### Development Requirements
+- phpstan/phpstan ^2.1
+- phpunit/phpunit ^11.5
+
+## Configuration
+
+The bundle works with default configuration without additional setup.
+
+## Usage
+
+### Teacher Management
 
 ```php
 use Tourze\TrainTeacherBundle\Service\TeacherService;
 
-// 注入服务
+// Inject service
 public function __construct(
     private TeacherService $teacherService
 ) {}
 
-// 创建教师
+// Create teacher
 $teacherData = [
-    'teacherName' => '张三',
-    'teacherType' => '专职',
-    'gender' => '男',
+    'teacherName' => 'John Doe',
+    'teacherType' => 'full-time',
+    'gender' => 'male',
     'birthDate' => new \DateTime('1980-01-01'),
     'idCard' => '110101198001011234',
     'phone' => '13800138000',
-    'email' => 'zhangsan@example.com',
-    'education' => '本科',
-    'major' => '安全工程',
-    'graduateSchool' => '北京理工大学',
+    'email' => 'john.doe@example.com',
+    'education' => 'bachelor',
+    'major' => 'Safety Engineering',
+    'graduateSchool' => 'University of Safety',
     'graduateDate' => new \DateTime('2002-07-01'),
     'workExperience' => 20,
-    'specialties' => ['安全管理', '风险评估'],
-    'teacherStatus' => '在职',
+    'specialties' => ['Safety Management', 'Risk Assessment'],
+    'teacherStatus' => 'active',
     'joinDate' => new \DateTime('2005-03-01'),
 ];
 
 $teacher = $this->teacherService->createTeacher($teacherData);
 
-// 获取教师信息
+// Get teacher information
 $teacher = $this->teacherService->getTeacherById($teacherId);
 $teacher = $this->teacherService->getTeacherByCode($teacherCode);
 
-// 搜索教师
-$teachers = $this->teacherService->searchTeachers('张三');
+// Search teachers
+$teachers = $this->teacherService->searchTeachers('John');
 
-// 获取统计信息
+// Get statistics
 $statistics = $this->teacherService->getTeacherStatistics();
 ```
 
-### 教师评价
+### Teacher Evaluation
 
 ```php
 use Tourze\TrainTeacherBundle\Service\EvaluationService;
 
-// 注入服务
+// Inject service
 public function __construct(
     private EvaluationService $evaluationService
 ) {}
 
-// 提交评价
+// Submit evaluation
 $evaluationData = [
-    'evaluatorType' => '学员',
-    'evaluationType' => '课程评价',
-    'evaluationItems' => ['教学态度', '专业水平', '沟通能力'],
+    'evaluatorType' => 'student',
+    'evaluationType' => 'course_evaluation',
+    'evaluationItems' => ['Teaching Attitude', 'Professional Level', 'Communication'],
     'evaluationScores' => [
-        '教学态度' => 5,
-        '专业水平' => 4.5,
-        '沟通能力' => 4.8,
+        'Teaching Attitude' => 5,
+        'Professional Level' => 4.5,
+        'Communication' => 4.8,
     ],
-    'evaluationComments' => '教学认真负责，专业知识扎实',
-    'suggestions' => ['建议增加实践案例'],
+    'evaluationComments' => 'Excellent teaching, solid professional knowledge',
+    'suggestions' => ['More practical case studies recommended'],
     'isAnonymous' => false,
 ];
 
@@ -124,83 +198,237 @@ $evaluation = $this->evaluationService->submitEvaluation(
     $evaluationData
 );
 
-// 获取评价统计
+// Get evaluation statistics
 $statistics = $this->evaluationService->getEvaluationStatistics($teacherId);
 
-// 生成评价报告
+// Generate evaluation report
 $report = $this->evaluationService->generateEvaluationReport($teacherId);
 ```
 
-### 绩效管理
+### Performance Management
 
 ```php
 use Tourze\TrainTeacherBundle\Service\PerformanceService;
 
-// 注入服务
+// Inject service
 public function __construct(
     private PerformanceService $performanceService
 ) {}
 
-// 计算绩效
+// Calculate performance
 $period = new \DateTime('2024-01-01');
 $performance = $this->performanceService->calculatePerformance($teacherId, $period);
 
-// 获取绩效排名
+// Get performance ranking
 $ranking = $this->performanceService->getPerformanceRanking(20);
 
-// 生成绩效报告
+// Generate performance report
 $report = $this->performanceService->generatePerformanceReport($teacherId);
 
-// 比较教师绩效
+// Compare teacher performance
 $comparison = $this->performanceService->compareTeacherPerformance(
     [$teacherId1, $teacherId2], 
     $period
 );
 ```
 
-## 数据模型
+## Advanced Usage
 
-### Teacher（教师）
-- 基本信息：姓名、编号、类型、性别、出生日期
-- 联系信息：电话、邮箱、地址
-- 身份信息：身份证号
-- 教育背景：学历、专业、毕业院校、毕业日期
-- 工作信息：工作经验、专业特长、状态、入职日期
+### Custom Evaluation Types
 
-### TeacherEvaluation（教师评价）
-- 评价信息：评价者类型、评价者ID、评价类型、评价日期
-- 评价内容：评价项目、评价分数、总体评分、评价意见
-- 建议信息：建议内容、是否匿名
-- 状态信息：评价状态
+You can define custom evaluation types by extending the base evaluation logic:
 
-### TeacherPerformance（教师绩效）
-- 绩效信息：绩效周期、平均评价分数、绩效指标
-- 评估结果：绩效分数、绩效等级、成就
+```php
+use Tourze\TrainTeacherBundle\Service\EvaluationService;
 
-## API 文档
+class CustomEvaluationService extends EvaluationService
+{
+    public function processCustomEvaluation(array $criteria): array
+    {
+        // Custom evaluation logic
+        return $this->processEvaluation($criteria);
+    }
+}
+```
 
-详细的 API 文档请参考各服务类的方法注释。
+### Performance Metrics Customization
 
-## 测试
+Customize performance calculation by implementing custom metrics:
 
-运行单元测试：
+```php
+use Tourze\TrainTeacherBundle\Service\PerformanceService;
+
+// Add custom metrics to performance calculation
+$customMetrics = [
+    'innovation_score' => 0.15,
+    'collaboration_score' => 0.10,
+    'technical_skills' => 0.25
+];
+
+$performance = $this->performanceService->calculatePerformanceWithCustomMetrics(
+    $teacherId,
+    $period,
+    $customMetrics
+);
+```
+
+### Data Export and Import
+
+Export teacher data for external analysis:
+
+```php
+use Tourze\TrainTeacherBundle\Service\TeacherService;
+
+// Export teacher data to CSV
+$csvData = $this->teacherService->exportToCSV($filters);
+
+// Import teacher data from external source
+$importResult = $this->teacherService->importFromArray($teacherData);
+```
+
+### Event-Driven Architecture
+
+The bundle supports event listeners for custom business logic:
+
+```php
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Tourze\TrainTeacherBundle\Event\TeacherEvaluatedEvent;
+
+class TeacherEvaluationSubscriber implements EventSubscriberInterface
+{
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            TeacherEvaluatedEvent::class => 'onTeacherEvaluated',
+        ];
+    }
+
+    public function onTeacherEvaluated(TeacherEvaluatedEvent $event): void
+    {
+        // Custom logic after teacher evaluation
+        $teacher = $event->getTeacher();
+        $evaluation = $event->getEvaluation();
+        
+        // Send notifications, update external systems, etc.
+    }
+}
+```
+
+## Data Models
+
+### Teacher
+- Basic Information: Name, code, type, gender, birth date
+- Contact Information: Phone, email, address
+- Identity Information: ID card number
+- Educational Background: Education level, major, graduate school, graduation date
+- Work Information: Work experience, specialties, status, join date
+
+### TeacherEvaluation
+- Evaluation Information: Evaluator type, evaluator ID, evaluation type, evaluation date
+- Evaluation Content: Evaluation items, evaluation scores, overall score, evaluation comments
+- Suggestion Information: Suggestions, anonymous flag
+- Status Information: Evaluation status
+
+### TeacherPerformance
+- Performance Information: Performance period, average evaluation score, performance indicators
+- Assessment Results: Performance score, performance level, achievements
+
+## Console Commands
+
+This bundle provides several console commands for teacher management operations.
+
+### teacher:evaluation:reminder
+Send teacher evaluation reminder notifications to relevant personnel.
+
+```bash
+# Send all overdue evaluation reminders (7 days)
+php bin/console teacher:evaluation:reminder
+
+# Send specific type evaluation reminders
+php bin/console teacher:evaluation:reminder --evaluation-type=student
+
+# Send reminders for specific teacher
+php bin/console teacher:evaluation:reminder --teacher-id=123
+
+# Preview mode (don't actually send)
+php bin/console teacher:evaluation:reminder --dry-run
+```
+
+### teacher:performance:calculate
+Calculate teacher performance regularly, supporting batch and individual calculations.
+
+```bash
+# Calculate performance for all teachers in current month
+php bin/console teacher:performance:calculate
+
+# Calculate performance for specific month
+php bin/console teacher:performance:calculate 2024-01
+
+# Calculate performance for specific teacher
+php bin/console teacher:performance:calculate --teacher-id=123
+
+# Force recalculation
+php bin/console teacher:performance:calculate --force
+```
+
+### teacher:data:sync
+Synchronize teacher data, check data consistency and integrity.
+
+```bash
+# Synchronize all teacher data
+php bin/console teacher:data:sync
+
+# Check only without execution
+php bin/console teacher:data:sync --dry-run
+
+# Auto-fix data issues
+php bin/console teacher:data:sync --fix-data
+
+# Check duplicate data
+php bin/console teacher:data:sync --check-duplicates
+```
+
+### teacher:report:generate
+Generate various teacher-related reports.
+
+```bash
+# Generate performance reports
+php bin/console teacher:report:generate performance
+
+# Generate evaluation reports for specific month
+php bin/console teacher:report:generate evaluation --period=2024-01
+
+# Generate statistics reports and export to CSV
+php bin/console teacher:report:generate statistics --output-format=csv --output-file=report.csv
+
+# Generate summary reports for top 10 teachers
+php bin/console teacher:report:generate summary --top-n=10 --include-details
+```
+
+## API Documentation
+
+Please refer to the method comments in each service class for detailed API documentation.
+
+## Testing
+
+Run unit tests:
 
 ```bash
 ./vendor/bin/phpunit packages/train-teacher-bundle/tests
 ```
 
-## 贡献
+## Contributing
 
-欢迎提交 Issue 和 Pull Request。
+Issues and Pull Requests are welcome.
 
-## 许可证
+## License
 
-MIT License
+The MIT License (MIT). Please see [License File](LICENSE) for more information.
 
-## 更新日志
+## Changelog
 
 ### v1.0.0
-- 初始版本发布
-- 实现教师管理基础功能
-- 实现多维度评价体系
-- 实现绩效评估系统
+- Initial release
+- Implemented basic teacher management functionality
+- Implemented multi-dimensional evaluation system
+- Implemented performance assessment system

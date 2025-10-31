@@ -9,4 +9,4 @@ namespace Tourze\TrainTeacherBundle\Exception;
  */
 class InvalidReportTypeException extends \InvalidArgumentException
 {
-} 
+}

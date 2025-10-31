@@ -18,7 +18,7 @@ class PerformanceService
         private readonly EntityManagerInterface $entityManager,
         private readonly TeacherPerformanceRepository $performanceRepository,
         private readonly TeacherService $teacherService,
-        private readonly EvaluationService $evaluationService
+        private readonly EvaluationService $evaluationService,
     ) {
     }
 
@@ -28,10 +28,10 @@ class PerformanceService
     public function calculatePerformance(string $teacherId, \DateTimeInterface $period): TeacherPerformance
     {
         $teacher = $this->teacherService->getTeacherById($teacherId);
-        
+
         // 检查是否已存在该周期的绩效记录
         $existingPerformance = $this->performanceRepository->findByTeacherAndPeriod($teacher, $period);
-        if ((bool) $existingPerformance) {
+        if (null !== $existingPerformance) {
             // 更新现有记录
             $performance = $existingPerformance;
         } else {
@@ -62,7 +62,7 @@ class PerformanceService
         $achievements = $this->calculateAchievements($teacher, $metrics);
         $performance->setAchievements($achievements);
 
-        if ($existingPerformance === null) {
+        if (null === $existingPerformance) {
             $this->entityManager->persist($performance);
         }
         $this->entityManager->flush();
@@ -72,20 +72,21 @@ class PerformanceService
 
     /**
      * 更新绩效指标
+     * @param array<string, mixed> $metrics
      */
     public function updatePerformanceMetrics(string $performanceId, array $metrics): TeacherPerformance
     {
         $performance = $this->performanceRepository->find($performanceId);
-        if (!$performance) {
+        if (!$performance instanceof TeacherPerformance) {
             throw new PerformanceNotFoundException('绩效记录不存在: ' . $performanceId);
         }
 
         $performance->setPerformanceMetrics($metrics);
-        
+
         // 重新计算绩效分数和等级
         $performanceScore = $this->calculatePerformanceScore($metrics, $performance->getAverageEvaluation());
         $performance->setPerformanceScore($performanceScore);
-        
+
         $performanceLevel = $this->determinePerformanceLevel($performanceScore);
         $performance->setPerformanceLevel($performanceLevel);
 
@@ -96,15 +97,19 @@ class PerformanceService
 
     /**
      * 获取教师绩效历史
+     * @return array<int, TeacherPerformance>
      */
     public function getPerformanceHistory(string $teacherId): array
     {
         $teacher = $this->teacherService->getTeacherById($teacherId);
+
         return $this->performanceRepository->findByTeacher($teacher);
     }
 
     /**
      * 比较教师绩效
+     * @param array<int, string> $teacherIds
+     * @return array<int, mixed>
      */
     public function compareTeacherPerformance(array $teacherIds, \DateTimeInterface $period): array
     {
@@ -113,13 +118,14 @@ class PerformanceService
 
     /**
      * 生成绩效报告
+     * @return array<string, mixed>
      */
     public function generatePerformanceReport(string $teacherId): array
     {
         $teacher = $this->teacherService->getTeacherById($teacherId);
         $performances = $this->performanceRepository->findByTeacher($teacher);
-        
-        if ((bool) empty($performances)) {
+
+        if ([] === $performances) {
             return [
                 'teacher' => [
                     'id' => $teacher->getId(),
@@ -133,13 +139,13 @@ class PerformanceService
 
         // 获取最新绩效
         $latestPerformance = $performances[0];
-        
+
         // 计算绩效趋势
         $trend = $this->performanceRepository->getPerformanceTrend($teacher, 12);
-        
+
         // 分析绩效变化
         $analysis = $this->analyzePerformanceChange($performances);
-        
+
         return [
             'teacher' => [
                 'id' => $teacher->getId(),
@@ -164,6 +170,7 @@ class PerformanceService
 
     /**
      * 获取绩效排名
+     * @return array<int, mixed>
      */
     public function getPerformanceRanking(int $limit = 20): array
     {
@@ -172,6 +179,7 @@ class PerformanceService
 
     /**
      * 获取指定周期的绩效排名
+     * @return array<int, mixed>
      */
     public function getPerformanceRankingByPeriod(\DateTimeInterface $period, int $limit = 20): array
     {
@@ -180,6 +188,7 @@ class PerformanceService
 
     /**
      * 获取绩效统计信息
+     * @return array<string, mixed>
      */
     public function getPerformanceStatistics(): array
     {
@@ -188,25 +197,25 @@ class PerformanceService
 
     /**
      * 计算绩效指标
+     * @return array<string, float>
      */
     private function calculatePerformanceMetrics(Teacher $teacher, \DateTimeInterface $period): array
     {
         // 这里可以根据具体业务需求计算各种绩效指标
         // 例如：授课时长、学员满意度、课程完成率等
-        
-        $metrics = [
+
+        return [
             'teachingHours' => $this->calculateTeachingHours($teacher, $period),
             'studentSatisfaction' => $this->calculateStudentSatisfaction($teacher, $period),
             'courseCompletionRate' => $this->calculateCourseCompletionRate($teacher, $period),
             'attendanceRate' => $this->calculateAttendanceRate($teacher, $period),
             'innovationScore' => $this->calculateInnovationScore($teacher, $period),
         ];
-
-        return $metrics;
     }
 
     /**
      * 计算绩效分数
+     * @param array<string, mixed> $metrics
      */
     private function calculatePerformanceScore(array $metrics, float $averageEvaluation): float
     {
@@ -221,16 +230,22 @@ class PerformanceService
         ];
 
         $score = 0;
-        
+
         // 评价分数（转换为百分制）
         $score += ($averageEvaluation * 20) * $weights['evaluation'];
-        
+
         // 其他指标
-        $score += ($metrics['teachingHours'] ?? 0) * $weights['teachingHours'];
-        $score += ($metrics['studentSatisfaction'] ?? 0) * $weights['satisfaction'];
-        $score += ($metrics['courseCompletionRate'] ?? 0) * $weights['completion'];
-        $score += ($metrics['attendanceRate'] ?? 0) * $weights['attendance'];
-        $score += ($metrics['innovationScore'] ?? 0) * $weights['innovation'];
+        $teachingHours = \is_numeric($metrics['teachingHours'] ?? 0) ? (float) ($metrics['teachingHours'] ?? 0) : 0.0;
+        $satisfaction = \is_numeric($metrics['studentSatisfaction'] ?? 0) ? (float) ($metrics['studentSatisfaction'] ?? 0) : 0.0;
+        $completion = \is_numeric($metrics['courseCompletionRate'] ?? 0) ? (float) ($metrics['courseCompletionRate'] ?? 0) : 0.0;
+        $attendance = \is_numeric($metrics['attendanceRate'] ?? 0) ? (float) ($metrics['attendanceRate'] ?? 0) : 0.0;
+        $innovation = \is_numeric($metrics['innovationScore'] ?? 0) ? (float) ($metrics['innovationScore'] ?? 0) : 0.0;
+
+        $score += $teachingHours * $weights['teachingHours'];
+        $score += $satisfaction * $weights['satisfaction'];
+        $score += $completion * $weights['completion'];
+        $score += $attendance * $weights['attendance'];
+        $score += $innovation * $weights['innovation'];
 
         return round($score, 2);
     }
@@ -242,38 +257,43 @@ class PerformanceService
     {
         if ($score >= 90) {
             return '优秀';
-        } elseif ($score >= 80) {
-            return '良好';
-        } elseif ($score >= 70) {
-            return '一般';
-        } elseif ($score >= 60) {
-            return '合格';
-        } else {
-            return '较差';
         }
+        if ($score >= 80) {
+            return '良好';
+        }
+        if ($score >= 70) {
+            return '一般';
+        }
+        if ($score >= 60) {
+            return '合格';
+        }
+
+        return '较差';
     }
 
     /**
      * 计算成就
+     * @param array<string, mixed> $metrics
+     * @return array<int, string>
      */
     private function calculateAchievements(Teacher $teacher, array $metrics): array
     {
         $achievements = [];
 
         // 根据指标判断成就
-        if ((bool) ($metrics['teachingHours'] ?? 0) >= 80) {
+        if (($metrics['teachingHours'] ?? 0) >= 80) {
             $achievements[] = '授课达人';
         }
-        if ((bool) ($metrics['studentSatisfaction'] ?? 0) >= 95) {
+        if (($metrics['studentSatisfaction'] ?? 0) >= 95) {
             $achievements[] = '学员最爱';
         }
-        if ((bool) ($metrics['courseCompletionRate'] ?? 0) >= 95) {
+        if (($metrics['courseCompletionRate'] ?? 0) >= 95) {
             $achievements[] = '完课之星';
         }
-        if ((bool) ($metrics['attendanceRate'] ?? 0) >= 98) {
+        if (($metrics['attendanceRate'] ?? 0) >= 98) {
             $achievements[] = '全勤教师';
         }
-        if ((bool) ($metrics['innovationScore'] ?? 0) >= 90) {
+        if (($metrics['innovationScore'] ?? 0) >= 90) {
             $achievements[] = '创新先锋';
         }
 
@@ -282,19 +302,17 @@ class PerformanceService
 
     /**
      * 分析绩效变化
+     * @param array<int, TeacherPerformance> $performances
+     * @return array<string, mixed>
      */
     private function analyzePerformanceChange(array $performances): array
     {
-        if ((bool) count($performances) < 2) {
+        if (count($performances) < 2) {
             return ['message' => '数据不足，无法分析趋势'];
         }
 
         $latest = $performances[0];
         $previous = $performances[1];
-
-        if ($latest === null || $previous === null) {
-            return ['message' => '绩效数据异常'];
-        }
 
         $scoreChange = $latest->getPerformanceScore() - $previous->getPerformanceScore();
         $evaluationChange = $latest->getAverageEvaluation() - $previous->getAverageEvaluation();
@@ -302,22 +320,41 @@ class PerformanceService
         $analysis = [
             'scoreChange' => round($scoreChange, 2),
             'evaluationChange' => round($evaluationChange, 1),
-            'trend' => $scoreChange > 0 ? '上升' : ($scoreChange < 0 ? '下降' : '持平'),
+            'trend' => $this->determineTrend($scoreChange),
         ];
 
-        if ($scoreChange > 5) {
-            $analysis['message'] = '绩效显著提升';
-        } elseif ($scoreChange > 0) {
-            $analysis['message'] = '绩效稳步提升';
-        } elseif ($scoreChange < -5) {
-            $analysis['message'] = '绩效明显下降';
-        } elseif ($scoreChange < 0) {
-            $analysis['message'] = '绩效略有下降';
-        } else {
-            $analysis['message'] = '绩效保持稳定';
-        }
+        $analysis['message'] = $this->generateChangeMessage($scoreChange);
 
         return $analysis;
+    }
+
+    /**
+     * 确定趋势
+     */
+    private function determineTrend(float $scoreChange): string
+    {
+        return $scoreChange > 0 ? '上升' : ($scoreChange < 0 ? '下降' : '持平');
+    }
+
+    /**
+     * 生成变化消息
+     */
+    private function generateChangeMessage(float $scoreChange): string
+    {
+        if ($scoreChange > 5) {
+            return '绩效显著提升';
+        }
+        if ($scoreChange > 0) {
+            return '绩效稳步提升';
+        }
+        if ($scoreChange < -5) {
+            return '绩效明显下降';
+        }
+        if ($scoreChange < 0) {
+            return '绩效略有下降';
+        }
+
+        return '绩效保持稳定';
     }
 
     /**
@@ -373,4 +410,4 @@ class PerformanceService
     {
         return uniqid('perf_', true);
     }
-} 
+}

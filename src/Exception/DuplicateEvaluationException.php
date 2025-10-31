@@ -7,4 +7,4 @@ namespace Tourze\TrainTeacherBundle\Exception;
  */
 class DuplicateEvaluationException extends \Exception
 {
-} 
+}

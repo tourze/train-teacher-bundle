@@ -8,6 +8,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Tourze\TrainTeacherBundle\Entity\Teacher;
+use Tourze\TrainTeacherBundle\Entity\TeacherEvaluation;
 use Tourze\TrainTeacherBundle\Repository\TeacherEvaluationRepository;
 use Tourze\TrainTeacherBundle\Repository\TeacherRepository;
 use Tourze\TrainTeacherBundle\Service\TeacherService;
@@ -22,12 +24,12 @@ use Tourze\TrainTeacherBundle\Service\TeacherService;
 )]
 class EvaluationReminderCommand extends Command
 {
-    
     public const NAME = 'teacher:evaluation:reminder';
-public function __construct(
+
+    public function __construct(
         private readonly TeacherService $teacherService,
         private readonly TeacherRepository $teacherRepository,
-        private readonly TeacherEvaluationRepository $evaluationRepository
+        private readonly TeacherEvaluationRepository $evaluationRepository,
     ) {
         parent::__construct();
     }
@@ -72,118 +74,107 @@ public function __construct(
                 InputOption::VALUE_OPTIONAL,
                 '批处理大小',
                 20
-            );
+            )
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        
-        // 解析参数
-        $evaluationType = $input->getOption('evaluation-type');
-        $teacherId = $input->getOption('teacher-id');
-        $daysOverdue = (int) $input->getOption('days-overdue');
-        $isDryRun = (bool) $input->getOption('dry-run');
-        $force = (bool) $input->getOption('force');
-        $batchSize = (int) $input->getOption('batch-size');
-
-        $io->title('教师评价提醒');
-
-        if ((bool) $isDryRun) {
-            $io->note('运行在预览模式，不会发送实际通知');
-        }
-
-        $reminderResults = [
-            'total_reminders' => 0,
-            'sent_reminders' => 0,
-            'skipped_reminders' => 0,
-            'failed_reminders' => 0,
-            'errors' => []
-        ];
+        $executionContext = $this->createExecutionContext($input, $io);
 
         try {
-            // 获取需要发送提醒的评价任务
-            $reminderTasks = $this->getReminderTasks($teacherId, $evaluationType, $daysOverdue, $force);
-            $reminderResults['total_reminders'] = count($reminderTasks);
+            /** @var string|null $teacherId */
+            $teacherId = $executionContext['teacherId'];
+            /** @var string|null $evaluationType */
+            $evaluationType = $executionContext['evaluationType'];
+            /** @var int $daysOverdue */
+            $daysOverdue = $executionContext['daysOverdue'];
+            /** @var bool $force */
+            $force = $executionContext['force'];
 
-            if ((bool) empty($reminderTasks)) {
+            $reminderTasks = $this->getReminderTasks($teacherId, $evaluationType, $daysOverdue, $force);
+
+            if ([] === $reminderTasks) {
                 $io->success('没有需要发送的评价提醒');
+
                 return Command::SUCCESS;
             }
 
-            $io->text('找到 ' . count($reminderTasks) . ' 个评价提醒需要发送');
+            $results = $this->processReminderTasks($reminderTasks, $executionContext, $io);
 
-            // 分批处理提醒发送
-            $batches = array_chunk($reminderTasks, $batchSize);
-            $totalBatches = count($batches);
-
-            $io->progressStart($reminderResults['total_reminders']);
-
-            foreach ($batches as $batchIndex => $batch) {
-                $io->section("处理批次 " . ($batchIndex + 1) . "/$totalBatches");
-                
-                foreach ($batch as $task) {
-                    $this->sendReminderTask(
-                        $task,
-                        $isDryRun,
-                        $reminderResults,
-                        $io
-                    );
-                    $io->progressAdvance();
-                }
-
-                // 批次间短暂休息
-                if ($batchIndex < $totalBatches - 1) {
-                    usleep(50000); // 0.05秒
-                }
-            }
-
-            $io->progressFinish();
-
-            // 显示发送结果
-            $this->displayReminderResults($reminderResults, $io);
-
-            if ($reminderResults['failed_reminders'] > 0) {
-                $io->warning('部分提醒发送失败，请检查错误详情');
-                return Command::FAILURE;
-            }
-
-            $io->success('评价提醒发送完成');
-            return Command::SUCCESS;
-
+            return $this->handleExecutionResult($results, $io);
         } catch (\Throwable $e) {
             $io->error('评价提醒发送失败: ' . $e->getMessage());
+
             return Command::FAILURE;
         }
     }
 
     /**
      * 获取需要发送提醒的任务列表
+     * @return array<int, array<string, mixed>>
      */
     private function getReminderTasks(?string $teacherId, ?string $evaluationType, int $daysOverdue, bool $force): array
     {
-        $tasks = [];
-        $currentDate = new \DateTime();
-        $overdueDate = (clone $currentDate)->modify("-{$daysOverdue} days");
+        $teachers = $this->getTargetTeachers($teacherId);
+        $evaluationTypes = $this->getEvaluationTypes($evaluationType);
+        $overdueDate = $this->calculateOverdueDate($daysOverdue);
 
-        // 获取目标教师列表
-        if ((bool) $teacherId) {
+        return $this->collectReminderTasks($teachers, $evaluationTypes, $overdueDate, $force);
+    }
+
+    /**
+     * 获取目标教师列表
+     * @return array<int, Teacher>
+     */
+    /**
+     * @return array<int, Teacher>
+     */
+    private function getTargetTeachers(?string $teacherId): array
+    {
+        if (null !== $teacherId) {
             try {
-                $teachers = [$this->teacherService->getTeacherById($teacherId)];
+                return [$this->teacherService->getTeacherById($teacherId)];
             } catch (\Throwable $e) {
                 return [];
             }
-        } else {
-            $teachers = $this->teacherRepository->findBy(['teacherStatus' => 'active']);
         }
 
+        return $this->teacherRepository->findBy(['teacherStatus' => 'active']);
+    }
+
+    /**
+     * 获取评价类型列表
+     * @return array<int, string>
+     */
+    private function getEvaluationTypes(?string $evaluationType): array
+    {
+        return null !== $evaluationType ? [$evaluationType] : ['student', 'peer', 'management', 'self'];
+    }
+
+    /**
+     * 计算过期日期
+     */
+    private function calculateOverdueDate(int $daysOverdue): \DateTime
+    {
+        return (new \DateTime())->modify("-{$daysOverdue} days");
+    }
+
+    /**
+     * 收集提醒任务
+     * @param array<int, Teacher> $teachers
+     * @param array<int, string> $evaluationTypes
+     * @return array<int, array<string, mixed>>
+     */
+    private function collectReminderTasks(array $teachers, array $evaluationTypes, \DateTime $overdueDate, bool $force): array
+    {
+        $tasks = [];
+
         foreach ($teachers as $teacher) {
-            // 检查各种类型的评价提醒
-            $evaluationTypes = $evaluationType !== null ? [$evaluationType] : ['student', 'peer', 'management', 'self'];
-            
             foreach ($evaluationTypes as $type) {
                 $reminderTask = $this->checkEvaluationReminder($teacher, $type, $overdueDate, $force);
-                if ((bool) $reminderTask) {
+                if (null !== $reminderTask) {
                     $tasks[] = $reminderTask;
                 }
             }
@@ -194,109 +185,152 @@ public function __construct(
 
     /**
      * 检查单个评价提醒
+     * @return array<string, mixed>|null
      */
-    private function checkEvaluationReminder($teacher, string $evaluationType, \DateTime $overdueDate, bool $force): ?array
+    private function checkEvaluationReminder(Teacher $teacher, string $evaluationType, \DateTime $overdueDate, bool $force): ?array
     {
-        // 获取最近的评价记录
-        $recentEvaluations = $this->evaluationRepository->findRecentEvaluations(
-            $teacher,
-            $evaluationType,
-            30 // 最近30天
-        );
+        $recentEvaluations = $this->getRecentEvaluations($teacher, $evaluationType);
+        $needsReminder = $this->determineReminderNeed($recentEvaluations, $overdueDate);
 
-        // 检查是否需要发送提醒
-        $needsReminder = false;
-        $lastEvaluationDate = null;
-
-        if ((bool) empty($recentEvaluations)) {
-            // 没有评价记录，需要提醒
-            $needsReminder = true;
-        } else {
-            // 检查最后评价时间
-            $lastEvaluation = $recentEvaluations[0];
-            $lastEvaluationDate = $lastEvaluation->getEvaluationDate();
-            
-            if ($lastEvaluationDate < $overdueDate) {
-                $needsReminder = true;
-            }
-        }
-
-        // 检查是否最近已发送过提醒（除非强制发送）
-        if ($needsReminder && (bool) !$force) {
-            $recentReminders = $this->getRecentReminders($teacher->getId(), $evaluationType, 3); // 最近3天
-            if (!empty($recentReminders)) {
-                $needsReminder = false;
-            }
+        if ($needsReminder && !$force) {
+            $needsReminder = !$this->hasRecentReminder($teacher->getId(), $evaluationType);
         }
 
         if (!$needsReminder) {
             return null;
         }
 
+        return $this->createReminderTask($teacher, $evaluationType, $recentEvaluations);
+    }
+
+    /**
+     * 获取最近评价记录
+     * @return array<int, TeacherEvaluation>
+     */
+    private function getRecentEvaluations(Teacher $teacher, string $evaluationType): array
+    {
+        return $this->evaluationRepository->findRecentEvaluations($teacher, $evaluationType, 30);
+    }
+
+    /**
+     * 判断是否需要提醒
+     * @param array<int, TeacherEvaluation> $recentEvaluations
+     */
+    private function determineReminderNeed(array $recentEvaluations, \DateTime $overdueDate): bool
+    {
+        if ([] === $recentEvaluations) {
+            return true;
+        }
+
+        $lastEvaluation = $recentEvaluations[0];
+        $lastEvaluationDate = $lastEvaluation->getEvaluationDate();
+
+        return $lastEvaluationDate < $overdueDate;
+    }
+
+    /**
+     * 检查是否最近有提醒
+     */
+    private function hasRecentReminder(string $teacherId, string $evaluationType): bool
+    {
+        $recentReminders = $this->getRecentReminders($teacherId, $evaluationType, 3);
+
+        return [] !== $recentReminders;
+    }
+
+    /**
+     * 创建提醒任务
+     * @param array<int, TeacherEvaluation> $recentEvaluations
+     * @return array<string, mixed>
+     */
+    private function createReminderTask(Teacher $teacher, string $evaluationType, array $recentEvaluations): array
+    {
+        $lastEvaluationDate = [] !== $recentEvaluations
+            ? $recentEvaluations[0]->getEvaluationDate()
+            : null;
+
         return [
             'teacher' => $teacher,
             'evaluation_type' => $evaluationType,
             'last_evaluation_date' => $lastEvaluationDate,
-            'days_overdue' => $lastEvaluationDate ? 
-                $lastEvaluationDate->diff(new \DateTime())->days : 
-                null,
-            'evaluators' => $this->getEvaluators($teacher, $evaluationType)
+            'days_overdue' => null !== $lastEvaluationDate
+                ? $lastEvaluationDate->diff(new \DateTime())->days
+                : null,
+            'evaluators' => $this->getEvaluators($teacher, $evaluationType),
         ];
     }
 
     /**
      * 发送单个提醒任务
+     * @param array<string, mixed> $task
+     * @return array<string, mixed>
      */
     private function sendReminderTask(
         array $task,
         bool $isDryRun,
-        array &$reminderResults,
-        SymfonyStyle $io
-    ): void {
+        SymfonyStyle $io,
+    ): array {
+        $result = [
+            'sent' => false,
+            'skipped' => false,
+            'failed' => false,
+            'error' => null,
+        ];
+
         try {
+            /** @var Teacher $teacher */
             $teacher = $task['teacher'];
+            /** @var string $evaluationType */
             $evaluationType = $task['evaluation_type'];
+            /** @var array<int, mixed> $evaluators */
             $evaluators = $task['evaluators'];
 
-            if ((bool) empty($evaluators)) {
-                $reminderResults['skipped_reminders']++;
+            if ([] === $evaluators) {
+                $result['skipped'] = true;
                 $io->text("跳过教师 {$teacher->getTeacherName()} 的 {$evaluationType} 评价提醒 (无评价者)");
-                return;
+
+                return $result;
             }
 
             if (!$isDryRun) {
                 // 发送实际提醒
                 $this->sendEvaluationReminder($teacher, $evaluationType, $evaluators);
-                
+
                 // 记录提醒发送日志
-                $this->logReminderSent($teacher->getId(), $evaluationType);
+                $this->logReminderSent((string) $teacher->getId(), $evaluationType);
             }
 
-            $reminderResults['sent_reminders']++;
+            $result['sent'] = true;
             $io->text(sprintf(
-                "✓ 已发送教师 %s 的 %s 评价提醒给 %d 个评价者",
+                '✓ 已发送教师 %s 的 %s 评价提醒给 %d 个评价者',
                 $teacher->getTeacherName(),
                 $this->getEvaluationTypeName($evaluationType),
                 count($evaluators)
             ));
-
         } catch (\Throwable $e) {
-            $reminderResults['failed_reminders']++;
-            $reminderResults['errors'][] = [
-                'teacher_id' => $task['teacher']->getId(),
-                'teacher_name' => $task['teacher']->getTeacherName(),
-                'evaluation_type' => $task['evaluation_type'],
-                'error' => $e->getMessage()
+            $result['failed'] = true;
+            /** @var Teacher $taskTeacher */
+            $taskTeacher = $task['teacher'];
+            /** @var string $taskEvaluationType */
+            $taskEvaluationType = $task['evaluation_type'];
+            $result['error'] = [
+                'teacher_id' => (string) $taskTeacher->getId(),
+                'teacher_name' => $taskTeacher->getTeacherName(),
+                'evaluation_type' => $taskEvaluationType,
+                'error' => $e->getMessage(),
             ];
-            
-            $io->text("✗ 教师 {$task['teacher']->getTeacherName()} 的 {$task['evaluation_type']} 评价提醒发送失败: " . $e->getMessage());
+
+            $io->text("✗ 教师 {$taskTeacher->getTeacherName()} 的 {$taskEvaluationType} 评价提醒发送失败: " . $e->getMessage());
         }
+
+        return $result;
     }
 
     /**
      * 获取评价者列表
+     * @return array<int, mixed>
      */
-    private function getEvaluators($teacher, string $evaluationType): array
+    private function getEvaluators(Teacher $teacher, string $evaluationType): array
     {
         // 这里应该根据实际业务逻辑获取评价者
         // 例如：学员评价需要获取该教师的学员列表
@@ -308,19 +342,19 @@ public function __construct(
             case 'student':
                 // 获取该教师的学员列表
                 return $this->getStudentEvaluators($teacher);
-                
+
             case 'peer':
                 // 获取同行教师列表
                 return $this->getPeerEvaluators($teacher);
-                
+
             case 'management':
                 // 获取管理层评价者
                 return $this->getManagementEvaluators($teacher);
-                
+
             case 'self':
                 // 自我评价
                 return [$teacher];
-                
+
             default:
                 return [];
         }
@@ -328,14 +362,15 @@ public function __construct(
 
     /**
      * 发送评价提醒
+     * @param array<int, mixed> $evaluators
      */
-    private function sendEvaluationReminder($teacher, string $evaluationType, array $evaluators): void
+    private function sendEvaluationReminder(Teacher $teacher, string $evaluationType, array $evaluators): void
     {
         // 这里应该实现实际的提醒发送逻辑
         // 例如：发送邮件、短信、系统通知等
-        
+
         $reminderMessage = $this->buildReminderMessage($teacher, $evaluationType);
-        
+
         foreach ($evaluators as $evaluator) {
             // 发送提醒通知
             $this->sendNotification($evaluator, $reminderMessage);
@@ -345,10 +380,10 @@ public function __construct(
     /**
      * 构建提醒消息
      */
-    private function buildReminderMessage($teacher, string $evaluationType): string
+    private function buildReminderMessage(Teacher $teacher, string $evaluationType): string
     {
         $typeName = $this->getEvaluationTypeName($evaluationType);
-        
+
         return sprintf(
             '您有一个待完成的教师评价任务：请对教师 %s 进行 %s 评价。请及时完成评价，谢谢！',
             $teacher->getTeacherName(),
@@ -359,7 +394,7 @@ public function __construct(
     /**
      * 发送通知
      */
-    private function sendNotification($evaluator, string $message): void
+    private function sendNotification(mixed $evaluator, string $message): void
     {
         // 实现具体的通知发送逻辑
         // 这里可以集成邮件服务、短信服务、消息队列等
@@ -375,14 +410,15 @@ public function __construct(
             'peer' => '同行评价',
             'management' => '管理层评价',
             'self' => '自我评价',
-            default => $evaluationType
+            default => $evaluationType,
         };
     }
 
     /**
      * 获取学员评价者
+     * @return array<int, mixed>
      */
-    private function getStudentEvaluators($teacher): array
+    private function getStudentEvaluators(Teacher $teacher): array
     {
         // 实现获取学员列表的逻辑
         // 这里需要与课程系统集成
@@ -391,20 +427,25 @@ public function __construct(
 
     /**
      * 获取同行评价者
+     * @return array<int, Teacher>
      */
-    private function getPeerEvaluators($teacher): array
+    /**
+     * @return array<int, Teacher>
+     */
+    private function getPeerEvaluators(Teacher $teacher): array
     {
         // 获取同部门或相关的其他教师
         return $this->teacherRepository->findBy([
             'teacherStatus' => 'active',
-            'teacherType' => $teacher->getTeacherType()
+            'teacherType' => $teacher->getTeacherType(),
         ]);
     }
 
     /**
      * 获取管理层评价者
+     * @return array<int, mixed>
      */
-    private function getManagementEvaluators($teacher): array
+    private function getManagementEvaluators(Teacher $teacher): array
     {
         // 获取管理层人员列表
         // 这里需要与用户权限系统集成
@@ -413,6 +454,7 @@ public function __construct(
 
     /**
      * 获取最近的提醒记录
+     * @return array<int, mixed>
      */
     private function getRecentReminders(string $teacherId, string $evaluationType, int $days): array
     {
@@ -431,7 +473,201 @@ public function __construct(
     }
 
     /**
+     * 创建执行上下文
+     * @return array<string, mixed>
+     */
+    private function createExecutionContext(InputInterface $input, SymfonyStyle $io): array
+    {
+        $io->title('教师评价提醒');
+
+        $evaluationType = $input->getOption('evaluation-type');
+        $teacherId = $input->getOption('teacher-id');
+        $daysOverdue = $input->getOption('days-overdue');
+        $isDryRun = $input->getOption('dry-run');
+        $force = $input->getOption('force');
+        $batchSize = $input->getOption('batch-size');
+
+        $context = [
+            'evaluationType' => is_string($evaluationType) ? $evaluationType : null,
+            'teacherId' => is_string($teacherId) ? $teacherId : null,
+            'daysOverdue' => max(1, is_numeric($daysOverdue) ? (int) $daysOverdue : 7),
+            'isDryRun' => (bool) $isDryRun,
+            'force' => (bool) $force,
+            'batchSize' => max(1, is_numeric($batchSize) ? (int) $batchSize : 20),
+        ];
+
+        if ($context['isDryRun']) {
+            $io->note('运行在预览模式，不会发送实际通知');
+        }
+
+        return $context;
+    }
+
+    /**
+     * 处理提醒任务批次
+     * @param array<int, array<string, mixed>> $reminderTasks
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
+    private function processReminderTasks(array $reminderTasks, array $context, SymfonyStyle $io): array
+    {
+        $results = $this->initializeReminderResults(count($reminderTasks));
+        $io->text('找到 ' . count($reminderTasks) . ' 个评价提醒需要发送');
+
+        /** @var int $batchSize */
+        $batchSize = $context['batchSize'];
+        $batches = array_chunk($reminderTasks, max(1, $batchSize));
+        /** @var int $totalReminders */
+        $totalReminders = $results['total_reminders'];
+        $io->progressStart($totalReminders);
+
+        foreach ($batches as $batchIndex => $batch) {
+            $results = $this->processBatch($batch, $batchIndex, count($batches), $context, $results, $io);
+        }
+
+        $io->progressFinish();
+
+        return $results;
+    }
+
+    /**
+     * 处理单个批次
+     * @param array<int, array<string, mixed>> $batch
+     * @param array<string, mixed> $context
+     * @param array<string, mixed> $results
+     * @return array<string, mixed>
+     */
+    private function processBatch(array $batch, int $batchIndex, int $totalBatches, array $context, array $results, SymfonyStyle $io): array
+    {
+        $io->section('处理批次 ' . ($batchIndex + 1) . "/{$totalBatches}");
+
+        foreach ($batch as $task) {
+            /** @var bool $isDryRun */
+            $isDryRun = $context['isDryRun'];
+            $taskResult = $this->sendReminderTask($task, $isDryRun, $io);
+            $results = $this->updateResults($results, $taskResult);
+            $io->progressAdvance();
+        }
+
+        $this->addBatchDelay($batchIndex, $totalBatches);
+
+        return $results;
+    }
+
+    /**
+     * 初始化提醒结果
+     * @return array<string, mixed>
+     */
+    private function initializeReminderResults(int $totalCount): array
+    {
+        return [
+            'total_reminders' => $totalCount,
+            'sent_reminders' => 0,
+            'skipped_reminders' => 0,
+            'failed_reminders' => 0,
+            'errors' => [],
+        ];
+    }
+
+    /**
+     * 更新结果统计
+     * @param array<string, mixed> $results
+     * @param array<string, mixed> $taskResult
+     * @return array<string, mixed>
+     */
+    private function updateResults(array $results, array $taskResult): array
+    {
+        if (true === $taskResult['sent']) {
+            return $this->incrementSentCount($results);
+        }
+
+        if (true === $taskResult['skipped']) {
+            return $this->incrementSkippedCount($results);
+        }
+
+        if (true === $taskResult['failed']) {
+            return $this->incrementFailedCount($results, $taskResult);
+        }
+
+        return $results;
+    }
+
+    /**
+     * 增加发送成功计数
+     * @param array<string, mixed> $results
+     * @return array<string, mixed>
+     */
+    private function incrementSentCount(array $results): array
+    {
+        $sentCount = \is_int($results['sent_reminders']) ? $results['sent_reminders'] : 0;
+        $results['sent_reminders'] = $sentCount + 1;
+
+        return $results;
+    }
+
+    /**
+     * 增加跳过计数
+     * @param array<string, mixed> $results
+     * @return array<string, mixed>
+     */
+    private function incrementSkippedCount(array $results): array
+    {
+        $skippedCount = \is_int($results['skipped_reminders']) ? $results['skipped_reminders'] : 0;
+        $results['skipped_reminders'] = $skippedCount + 1;
+
+        return $results;
+    }
+
+    /**
+     * 增加失败计数
+     * @param array<string, mixed> $results
+     * @param array<string, mixed> $taskResult
+     * @return array<string, mixed>
+     */
+    private function incrementFailedCount(array $results, array $taskResult): array
+    {
+        $failedCount = \is_int($results['failed_reminders']) ? $results['failed_reminders'] : 0;
+        $results['failed_reminders'] = $failedCount + 1;
+
+        if (null !== $taskResult['error'] && \is_array($results['errors'])) {
+            $results['errors'][] = $taskResult['error'];
+        }
+
+        return $results;
+    }
+
+    /**
+     * 添加批次间延迟
+     */
+    private function addBatchDelay(int $batchIndex, int $totalBatches): void
+    {
+        if ($batchIndex < $totalBatches - 1) {
+            usleep(50000); // 0.05秒
+        }
+    }
+
+    /**
+     * 处理执行结果
+     * @param array<string, mixed> $results
+     */
+    private function handleExecutionResult(array $results, SymfonyStyle $io): int
+    {
+        $this->displayReminderResults($results, $io);
+
+        if ($results['failed_reminders'] > 0) {
+            $io->warning('部分提醒发送失败，请检查错误详情');
+
+            return Command::FAILURE;
+        }
+
+        $io->success('评价提醒发送完成');
+
+        return Command::SUCCESS;
+    }
+
+    /**
      * 显示提醒结果
+     * @param array<string, mixed> $reminderResults
      */
     private function displayReminderResults(array $reminderResults, SymfonyStyle $io): void
     {
@@ -443,14 +679,16 @@ public function __construct(
                 ['总提醒数', $reminderResults['total_reminders']],
                 ['成功发送', $reminderResults['sent_reminders']],
                 ['跳过发送', $reminderResults['skipped_reminders']],
-                ['发送失败', $reminderResults['failed_reminders']]
+                ['发送失败', $reminderResults['failed_reminders']],
             ]
         );
 
         // 显示详细错误信息
-        if (!empty($reminderResults['errors'])) {
+        /** @var array<int, array<string, string>> $errors */
+        $errors = $reminderResults['errors'];
+        if ([] !== $errors) {
             $io->section('发送失败详情');
-            foreach ($reminderResults['errors'] as $error) {
+            foreach ($errors as $error) {
                 $io->text(sprintf(
                     '教师: %s (%s) - 评价类型: %s - 错误: %s',
                     $error['teacher_name'],
@@ -462,9 +700,13 @@ public function __construct(
         }
 
         // 显示成功率
-        if ($reminderResults['total_reminders'] > 0) {
-            $successRate = ($reminderResults['sent_reminders'] / $reminderResults['total_reminders']) * 100;
+        /** @var int $totalReminders */
+        $totalReminders = $reminderResults['total_reminders'];
+        /** @var int $sentReminders */
+        $sentReminders = $reminderResults['sent_reminders'];
+        if ($totalReminders > 0) {
+            $successRate = ($sentReminders / $totalReminders) * 100;
             $io->text(sprintf('成功率: %.2f%%', $successRate));
         }
     }
-} 
+}

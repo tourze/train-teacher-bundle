@@ -9,4 +9,4 @@ namespace Tourze\TrainTeacherBundle\Exception;
  */
 class UnsupportedOutputFormatException extends \InvalidArgumentException
 {
-} 
+}

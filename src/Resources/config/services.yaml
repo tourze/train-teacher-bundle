@@ -7,10 +7,19 @@ services:
 
   Tourze\TrainTeacherBundle\Command\:
     resource: '../../Command/'
+  Tourze\TrainTeacherBundle\Controller\:
+    resource: '../../Controller/'
+    tags: ['controller.service_arguments']
   Tourze\TrainTeacherBundle\Repository\:
     resource: '../../Repository/'
-  Tourze\TrainTeacherBundle\Service\:
-    resource: '../../Service/'
+  Tourze\TrainTeacherBundle\Helper\:
+    resource: '../../Helper/'
+  Tourze\TrainTeacherBundle\Service\EvaluationService:
+  Tourze\TrainTeacherBundle\Service\PerformanceService:
+  Tourze\TrainTeacherBundle\Service\TeacherService:
+  Tourze\TrainTeacherBundle\Service\AdminMenu:
+    public: true
+    tags: ['tourze.easy_admin_menu.provider']
   Tourze\TrainTeacherBundle\EntityListener\:
     resource: '../../EntityListener/'
     tags: ['doctrine.orm.entity_listener']
