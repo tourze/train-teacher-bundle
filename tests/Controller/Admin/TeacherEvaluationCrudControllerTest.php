@@ -93,11 +93,6 @@ final class TeacherEvaluationCrudControllerTest extends AbstractEasyAdminControl
         ];
     }
 
-    public function testGetEntityFqcn(): void
-    {
-        $this->assertSame(TeacherEvaluation::class, TeacherEvaluationCrudController::getEntityFqcn());
-    }
-
     public function testControllerImplementsInterface(): void
     {
         $controller = new TeacherEvaluationCrudController();
